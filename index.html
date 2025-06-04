@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check if my email service is working</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        /* Styles for the modal overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Test Your Email Reception</h1>
+
+        <p class="text-gray-600 text-sm mb-6 text-center">
+            Enter an email address below to verify that you are properly receiving emails.
+        </p>
+
+        <form id="webhookForm" class="space-y-4">
+            <div>
+                <label for="emailInput" class="block text-gray-700 text-sm font-medium mb-2">Email to Test:</label>
+                <input
+                    type="email"
+                    id="emailInput"
+                    placeholder="your-email@example.com"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                >
+            </div>
+            <button
+                type="submit"
+                id="sendButton"
+                class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 shadow-md flex items-center justify-center"
+            >
+                <span id="buttonText">Send Test Email</span>
+            </button>
+        </form>
+
+        <div id="messageBox" class="mt-6 p-4 rounded-lg hidden">
+            <p id="messageText" class="font-medium"></p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-200 text-center">
+            <button id="viewInfoButton" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200">
+                How this service works
+            </button>
+        </div>
+    </div>
+
+    <!-- How it Works Modal -->
+    <div id="howItWorksModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="closeHowItWorksModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <div id="howItWorksContent">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">How This Service Works</h2>
+                <div class="mt-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-700">
+                    <p>When you click "Send Test Email", this service sends a request to a backend system with the email address you provided.</p>
+                    <p class="mt-2">The backend system then attempts to send a test email to that address. This helps you confirm if your email reception is working correctly, regardless of the sender.</p>
+                    <p class="mt-4 text-center">
+                        <a href="#" id="viewWebhookInfoLink" class="text-blue-600 hover:underline font-semibold">View webhook info</a>
+                    </p>
+                </div>
+            </div>
+
+            <div id="webhookInfoContent" class="hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Webhook Information</h2>
+                <div class="mt-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-700">
+                    <p class="font-semibold mb-2">Details of the webhook call:</p>
+                    <p><strong>URL:</strong> <span id="webhookUrlDisplay"></span></p>
+                    <p><strong>Method:</strong> POST</p>
+                    <p><strong>Content-Type:</strong> application/json</p>
+                    <p><strong>Payload:</strong> <code>{ "email": "your-email@example.com" }</code></p>
+                    <p class="mt-4 text-center">
+                        <button id="backToHowItWorksButton" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200">
+                            Back
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const webhookForm = document.getElementById('webhookForm');
+        const emailInput = document.getElementById('emailInput');
+        const sendButton = document.getElementById('sendButton');
+        const buttonText = document.getElementById('buttonText');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        const viewInfoButton = document.getElementById('viewInfoButton');
+        const howItWorksModal = document.getElementById('howItWorksModal');
+        const closeHowItWorksModal = document.getElementById('closeHowItWorksModal');
+
+        const howItWorksContent = document.getElementById('howItWorksContent');
+        const webhookInfoContent = document.getElementById('webhookInfoContent');
+        const viewWebhookInfoLink = document.getElementById('viewWebhookInfoLink');
+        const backToHowItWorksButton = document.getElementById('backToHowItWorksButton');
+        const webhookUrlDisplay = document.getElementById('webhookUrlDisplay');
+
+        const WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
+
+        webhookUrlDisplay.textContent = WEBHOOK_URL;
+
+        function showMessage(message, type = 'info') {
+            messageText.innerHTML = message;
+            messageBox.classList.remove('hidden', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-red-100', 'border-red-200', 'text-red-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
+
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'border-red-200', 'text-red-800');
+            } else {
+                messageBox.classList.add('bg-blue-100', 'border-blue-200', 'text-blue-800');
+            }
+            messageBox.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        function setButtonState(isLoading) {
+            sendButton.disabled = isLoading;
+            buttonText.textContent = isLoading ? 'Sending...' : 'Send Test Email';
+        }
+
+        webhookForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            hideMessage();
+            setButtonState(true);
+
+            const recipientEmail = emailInput.value;
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: recipientEmail
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage(`Test email successfully sent to: <span class="font-bold">${recipientEmail}</span>. Please check your inbox.`, 'success');
+                } else {
+                    showMessage(`Failed to send test email. Status: ${response.status}.`, 'error');
+                }
+            } catch (error) {
+                showMessage(`An error occurred: ${error.message}. Please check the URL and your network connection.`, 'error');
+            } finally {
+                setButtonState(false);
+            }
+        });
+
+        // Event listeners for How it Works Modal
+        viewInfoButton.addEventListener('click', function() {
+            howItWorksModal.classList.remove('hidden');
+            howItWorksContent.classList.remove('hidden');
+            webhookInfoContent.classList.add('hidden');
+        });
+
+        closeHowItWorksModal.addEventListener('click', function() {
+            howItWorksModal.classList.add('hidden');
+        });
+
+        howItWorksModal.addEventListener('click', function(event) {
+            if (event.target === howItWorksModal) {
+                howItWorksModal.classList.add('hidden');
+            }
+        });
+
+        viewWebhookInfoLink.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
+            howItWorksContent.classList.add('hidden');
+            webhookInfoContent.classList.remove('hidden');
+        });
+
+        backToHowItWorksButton.addEventListener('click', function() {
+            webhookInfoContent.classList.add('hidden');
+            howItWorksContent.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
