@@ -11,7 +11,6 @@
             font-family: 'Inter', sans-serif;
             background-color: #f0f2f5;
         }
-        /* Styles for the modal overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -35,8 +34,8 @@
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+<body class="flex flex-col items-center justify-center min-h-screen p-4 pb-20">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md mb-8">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Test Your Email Reception</h1>
 
         <p class="text-gray-600 text-sm mb-6 text-center">
@@ -74,7 +73,6 @@
         </div>
     </div>
 
-    <!-- How it Works Modal -->
     <div id="howItWorksModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button id="closeHowItWorksModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
@@ -112,6 +110,22 @@
         </div>
     </div>
 
+    <div id="businessEmailBanner" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex flex-col sm:flex-row items-center justify-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4 shadow-xl rounded-t-lg z-50 opacity-100 transition-opacity duration-500 ease-out">
+        <p class="text-base font-semibold text-center sm:text-left">
+            Need a professional email address? Get a business email today!
+        </p>
+        <div class="flex items-center space-x-3">
+            <button id="getBusinessEmailButton" class="bg-white text-blue-700 px-5 py-2 rounded-full font-bold text-sm shadow-md hover:bg-gray-100 transition duration-200">
+                Learn More
+            </button>
+            <button id="dismissBannerButton" class="text-white hover:text-gray-200 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <script>
         const webhookForm = document.getElementById('webhookForm');
         const emailInput = document.getElementById('emailInput');
@@ -129,6 +143,10 @@
         const viewWebhookInfoLink = document.getElementById('viewWebhookInfoLink');
         const backToHowItWorksButton = document.getElementById('backToHowItWorksButton');
         const webhookUrlDisplay = document.getElementById('webhookUrlDisplay');
+
+        const businessEmailBanner = document.getElementById('businessEmailBanner');
+        const getBusinessEmailButton = document.getElementById('getBusinessEmailButton');
+        const dismissBannerButton = document.getElementById('dismissBannerButton');
 
         const WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
 
@@ -188,7 +206,6 @@
             }
         });
 
-        // Event listeners for How it Works Modal
         viewInfoButton.addEventListener('click', function() {
             howItWorksModal.classList.remove('hidden');
             howItWorksContent.classList.remove('hidden');
@@ -206,7 +223,7 @@
         });
 
         viewWebhookInfoLink.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent default link behavior
+            event.preventDefault();
             howItWorksContent.classList.add('hidden');
             webhookInfoContent.classList.remove('hidden');
         });
@@ -214,6 +231,18 @@
         backToHowItWorksButton.addEventListener('click', function() {
             webhookInfoContent.classList.add('hidden');
             howItWorksContent.classList.remove('hidden');
+        });
+
+        dismissBannerButton.addEventListener('click', function() {
+            businessEmailBanner.classList.remove('opacity-100');
+            businessEmailBanner.classList.add('opacity-0');
+            setTimeout(() => {
+                businessEmailBanner.classList.add('hidden');
+            }, 500); // Matches the transition duration
+        });
+
+        getBusinessEmailButton.addEventListener('click', function() {
+            window.location.href = 'businessemail.html';
         });
     </script>
 </body>
