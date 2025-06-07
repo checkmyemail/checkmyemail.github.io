@@ -123,7 +123,6 @@
             </button>
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Daily Email Limit Explained</h2>
             
-            <!-- Huge Countdown Display - Modified for one line -->
             <div id="modalCountdownContainer" class="text-center mb-4 flex flex-col items-center justify-center">
                 <p class="text-lg text-gray-700">Next test available in:</p>
                 <div id="modalCountdownDisplay" class="text-5xl font-extrabold text-blue-600 mt-2">
@@ -158,7 +157,8 @@
         const closeLimitInfoModal = document.getElementById('closeLimitInfoModal');
         const modalCountdownContainer = document.getElementById('modalCountdownContainer');
         const modalCountdownDisplay = document.getElementById('modalCountdownDisplay');
-        const webhookUrlDisplay = document.getElementById('webhookUrlDisplay'); // Moved declaration here
+        // Removed webhookUrlDisplay variable as the element it references has been removed
+        // const webhookUrlDisplay = document.getElementById('webhookUrlDisplay');
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
         const SRC_PARAM_WEBHOOK_URL = 'https://eor9n5ln3tor0v8.m.pipedream.net';
@@ -236,10 +236,15 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize webhook URL display inside DOMContentLoaded
-            webhookUrlDisplay.textContent = DEFAULT_WEBHOOK_URL;
+            // Removed initialization of webhookUrlDisplay.textContent as the element is removed
+            // webhookUrlDisplay.textContent = DEFAULT_WEBHOOK_URL;
 
             const urlParams = new URLSearchParams(window.location.search);
+
+            // Log parameter values for debugging
+            console.log('URL Parameter: hidebanner =', urlParams.get('hidebanner'));
+            console.log('URL Parameter: src =', urlParams.get('src'));
+
 
             if (urlParams.get('hidebanner') === 'true') {
                 businessEmailBanner.classList.add('hidden');
@@ -391,4 +396,5 @@
     </script>
 </body>
 </html>
+
 
