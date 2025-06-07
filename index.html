@@ -55,13 +55,12 @@
             transform: scale(1.1);
         }
         /* New styles for the unlimited tests notification banner */
-        #unlimitedTestsBanner {
+        #unlimitedTestsBanner, #usbCounterBanner { 
             position: fixed;
-            top: 20px;
             right: 20px;
             width: 90%;
-            max-width: 320px; /* Keep it compact */
-            background: linear-gradient(to right, #4F46E5, #8B5CF6); /* Purple gradient */
+            max-width: 320px; 
+            background: linear-gradient(to right, #4F46E5, #8B5CF6); 
             color: white;
             padding: 1.25rem;
             border-radius: 0.75rem;
@@ -69,14 +68,14 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            z-index: 900; /* Below modals, above other elements */
-            transform: translateX(120%); /* Start off-screen to the right */
-            transition: transform 0.5s ease-out; /* Smooth slide transition */
+            z-index: 900; 
+            transform: translateX(120%); 
+            transition: transform 0.5s ease-out; 
         }
-        #unlimitedTestsBanner.show {
-            transform: translateX(0); /* Slide into view */
+        #unlimitedTestsBanner.show, #usbCounterBanner.show {
+            transform: translateX(0); 
         }
-        #unlimitedTestsBanner .dismiss-button {
+        #unlimitedTestsBanner .dismiss-button, #usbCounterBanner .dismiss-button {
             position: absolute;
             top: 0.5rem;
             right: 0.5rem;
@@ -88,8 +87,30 @@
             opacity: 0.8;
             transition: opacity 0.2s;
         }
-        #unlimitedTestsBanner .dismiss-button:hover {
+        #unlimitedTestsBanner .dismiss-button:hover, #usbCounterBanner .dismiss-button:hover {
             opacity: 1;
+        }
+        #unlimitedTestsBanner {
+            top: 20px; /* Position the first banner */
+        }
+        #usbCounterBanner { 
+            background: linear-gradient(to right, #2563EB, #3B82F6); 
+            top: 200px; /* Position below the first banner with more space */
+        }
+
+        /* Spinner animation for USB modal */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -152,12 +173,27 @@
         <button class="dismiss-button" id="dismissUnlimitedTestsBanner">
             &times;
         </button>
-        <h2 class="text-xl font-bold mb-2">Get Unlimited Tests!</h2>
+        <h2 class="text-xl font-bold mb-2">Get Unlimited Tests and remove ads!</h2>
         <p class="text-sm mb-4">
-            Complete the hCaptcha challenge to get unlimited test emails for a period of one hour.
+            Complete the hCaptcha challenge to get unlimited test emails and remove ads for one hour!
         </p>
         <button id="getUnlimitedTestsButton" class="w-full px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition duration-200 shadow-md">
             Complete Challenge
+        </button>
+    </div>
+
+    <!-- USB Counter Advertisement Banner -->
+    <div id="usbCounterBanner" class="hidden">
+        <button class="dismiss-button" id="dismissUsbCounterBanner">
+            &times;
+        </button>
+        <small class="text-xs font-semibold uppercase opacity-75 mb-1">Advertisement</small>
+        <h2 class="text-xl font-bold mb-2">Count My USBs!</h2>
+        <p class="text-sm mb-4">
+            Count how many USBs are connected to your computer!
+        </p>
+        <button id="scanNowButton" class="w-full px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition duration-200 shadow-md">
+            Scan Now
         </button>
     </div>
 
@@ -285,6 +321,22 @@
         </div>
     </div>
 
+    <!-- USB Scan Modal -->
+    <div id="usbScanModal" class="modal-overlay hidden">
+        <div class="modal-content text-center">
+            <button id="closeUsbScanModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4" id="usbScanModalTitle">Counting USBs...</h2>
+            <div id="usbScanModalContent" class="flex flex-col items-center justify-center p-4">
+                <div class="spinner" id="usbSpinner"></div>
+                <p class="text-gray-700 mt-4" id="usbScanMessage">Attempting to detect connected USB devices.</p>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const webhookForm = document.getElementById('webhookForm');
@@ -312,6 +364,11 @@
         const dismissUnlimitedTestsBanner = document.getElementById('dismissUnlimitedTestsBanner');
         const getUnlimitedTestsButton = document.getElementById('getUnlimitedTestsButton');
 
+        const usbCounterBanner = document.getElementById('usbCounterBanner');
+        const dismissUsbCounterBanner = document.getElementById('dismissUsbCounterBanner');
+        const scanNowButton = document.getElementById('scanNowButton');
+
+
         const hCaptchaModal = document.getElementById('hCaptchaModal');
         const closeHCaptchaModal = document.getElementById('closeHCaptchaModal');
         const hCaptchaMessage = document.getElementById('hCaptchaMessage');
@@ -332,6 +389,14 @@
         const closeNotificationConsentModal = document.getElementById('closeNotificationConsentModal');
         const allowNotificationsButton = document.getElementById('allowNotificationsButton');
         const dismissNotificationsButton = document.getElementById('dismissNotificationsButton');
+
+        // USB Scan Modal elements
+        const usbScanModal = document.getElementById('usbScanModal');
+        const closeUsbScanModal = document.getElementById('closeUsbScanModal');
+        const usbScanModalTitle = document.getElementById('usbScanModalTitle');
+        const usbScanModalContent = document.getElementById('usbScanModalContent');
+        const usbSpinner = document.getElementById('usbSpinner');
+        const usbScanMessage = document.getElementById('usbScanMessage');
 
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
@@ -394,7 +459,6 @@
 
         // --- Notification Functions ---
         function showNotificationConsentModal() {
-            // This function now always shows the modal when called
             notificationConsentModal.classList.remove('hidden');
         }
 
@@ -449,7 +513,7 @@
                     console.log(`Scheduled expiry notification for ${new Date(fiveMinutesBeforeExpiry).toLocaleString()}`);
                 } else if (expiryTime > now) {
                     new Notification("Unlimited Tests Expiring Soon!", {
-                        body: "Your 1-hour unlimited email test access will expire very soon!"
+                        body: "Your 1-hour unlimited test email access will expire very soon!"
                     });
                 }
             }
@@ -473,6 +537,8 @@
                 
                 unlimitedTestsBanner.classList.remove('show');
                 unlimitedTestsBanner.classList.add('hidden');
+                usbCounterBanner.classList.remove('show'); 
+                usbCounterBanner.classList.add('hidden');
                 
                 localStorage.removeItem(LAST_SENT_KEY);
 
@@ -520,6 +586,8 @@
                     isUnlimitedTestsActive = true;
                     unlimitedTestsBanner.classList.remove('show');
                     unlimitedTestsBanner.classList.add('hidden');
+                    usbCounterBanner.classList.remove('show'); 
+                    usbCounterBanner.classList.add('hidden');
                     if (localStorage.getItem(NOTIFICATION_PERMISSION_KEY) === 'granted') {
                         scheduleExpiryNotification();
                     }
@@ -528,11 +596,23 @@
                     localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
                     unlimitedTestsBanner.classList.remove('hidden');
                     setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
+
+                    usbCounterBanner.classList.add('hidden');
+                    setTimeout(() => {
+                        usbCounterBanner.classList.remove('hidden');
+                        setTimeout(() => usbCounterBanner.classList.add('show'), 50);
+                    }, 5000);
                 }
             } else {
                 isUnlimitedTestsActive = false;
                 unlimitedTestsBanner.classList.remove('hidden');
                 setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
+
+                usbCounterBanner.classList.add('hidden');
+                setTimeout(() => {
+                    usbCounterBanner.classList.remove('hidden');
+                    setTimeout(() => usbCounterBanner.classList.add('show'), 50);
+                }, 5000);
             }
         }
 
@@ -709,6 +789,11 @@
 
                     unlimitedTestsBanner.classList.remove('hidden');
                     setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
+                    usbCounterBanner.classList.add('hidden'); 
+                    setTimeout(() => {
+                        usbCounterBanner.classList.remove('hidden');
+                        setTimeout(() => usbCounterBanner.classList.add('show'), 50);
+                    }, 5000);
 
                 } else {
                     statusModalContent.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
@@ -733,6 +818,11 @@
                     }
                     unlimitedTestsBanner.classList.remove('hidden');
                     setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
+                    usbCounterBanner.classList.add('hidden'); 
+                    setTimeout(() => {
+                        usbCounterBanner.classList.remove('hidden');
+                        setTimeout(() => usbCounterBanner.classList.add('show'), 50);
+                    }, 5000);
                 }
             }
         }
@@ -1014,6 +1104,73 @@
                 localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); 
                 notificationConsentModal.classList.add('hidden');
                 showMessage("Notification prompt closed.", "info");
+            }
+        });
+
+        dismissUsbCounterBanner.addEventListener('click', function() {
+            usbCounterBanner.classList.remove('show');
+            usbCounterBanner.classList.add('hidden');
+        });
+
+        scanNowButton.addEventListener('click', async function() {
+            usbScanModal.classList.remove('hidden');
+            usbScanModalTitle.textContent = 'Counting USBs...';
+            usbSpinner.classList.remove('hidden');
+            usbScanMessage.textContent = 'Attempting to detect connected USB devices.';
+
+            let usbCount = 0;
+            let errorMessage = '';
+
+            try {
+                // Feature detection for WebUSB API
+                if ('usb' in navigator) {
+                    // This requests permission for ANY USB device.
+                    // In a real scenario, you'd specify filters for known vendors/products.
+                    // For demonstration, we'll try to get all allowed devices.
+                    const devices = await navigator.usb.getDevices();
+                    usbCount = devices.length;
+
+                    if (usbCount > 0) {
+                        usbScanMessage.textContent = `Found ${usbCount} USB device(s).`;
+                    } else {
+                        usbScanMessage.textContent = 'No USB devices found or permission not granted. Try connecting a device and allowing access.';
+                    }
+                } else {
+                    errorMessage = 'WebUSB API not supported in this browser or environment.';
+                }
+            } catch (error) {
+                console.error("USB scan error:", error);
+                if (error.name === 'NotFoundError') {
+                    errorMessage = 'No USB device selected or found. Please connect a device and try again.';
+                } else if (error.name === 'SecurityError') {
+                    errorMessage = 'USB access denied by browser or user. Please allow access if prompted.';
+                } else {
+                    errorMessage = `An error occurred during USB scan: ${error.message}`;
+                }
+            } finally {
+                // Simulate a loading time before showing result
+                setTimeout(() => {
+                    usbSpinner.classList.add('hidden');
+                    if (errorMessage) {
+                        usbScanModalTitle.textContent = 'USB Scan Failed';
+                        usbScanMessage.textContent = errorMessage;
+                        usbScanModalContent.classList.remove('flex-col'); // Remove flex-col for better error message layout
+                        usbScanModalContent.classList.add('text-red-600', 'font-semibold');
+                    } else {
+                        usbScanModalTitle.textContent = 'USB Scan Complete!';
+                        usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
+                    }
+                }, 2000); // 2 second delay for effect
+            }
+        });
+
+        closeUsbScanModal.addEventListener('click', function() {
+            usbScanModal.classList.add('hidden');
+        });
+
+        usbScanModal.addEventListener('click', function(event) {
+            if (event.target === usbScanModal) {
+                usbScanModal.classList.add('hidden');
             }
         });
     </script>
