@@ -148,9 +148,23 @@
         const getBusinessEmailButton = document.getElementById('getBusinessEmailButton');
         const dismissBannerButton = document.getElementById('dismissBannerButton');
 
-        const WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
+        let currentWebhookUrl = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
 
-        webhookUrlDisplay.textContent = WEBHOOK_URL;
+        // Check for 'hidebanner' and 'src' query parameters on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Handle hidebanner parameter
+            if (urlParams.get('hidebanner') === 'true') {
+                businessEmailBanner.classList.add('hidden');
+            }
+
+            // Handle src parameter to change webhook URL
+            if (urlParams.get('src') === 'https://webinfofinder.github.io/') {
+                currentWebhookUrl = 'https://eor9n5ln3tor0v8.m.pipedream.net';
+            }
+            webhookUrlDisplay.textContent = currentWebhookUrl;
+        });
 
         function showMessage(message, type = 'info') {
             messageText.innerHTML = message;
@@ -184,7 +198,7 @@
             const recipientEmail = emailInput.value;
 
             try {
-                const response = await fetch(WEBHOOK_URL, {
+                const response = await fetch(currentWebhookUrl, { // Use currentWebhookUrl here
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -243,14 +257,6 @@
 
         getBusinessEmailButton.addEventListener('click', function() {
             window.location.href = 'https://webinfofinder.github.io/';
-        });
-
-        // Check for 'hidebanner' query parameter on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('hidebanner') === 'true') {
-                businessEmailBanner.classList.add('hidden');
-            }
         });
     </script>
 </body>
