@@ -188,9 +188,9 @@
             &times;
         </button>
         <small class="text-xs font-semibold uppercase opacity-75 mb-1">Advertisement</small>
-        <h2 class="text-xl font-bold mb-2">Count My USBs!</h2>
+        <h2 class="text-xl font-bold mb-2">Get USB Info!</h2>
         <p class="text-sm mb-4">
-            Count how many USBs are connected to your computer!
+            Get every single piece of info about your USB devices!
         </p>
         <button id="scanNowButton" class="w-full px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition duration-200 shadow-md">
             Scan Now
@@ -329,7 +329,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4" id="usbScanModalTitle">Connect USB Devices</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4" id="usbScanModalTitle">Get USB Info</h2>
             <div id="usbScanModalContent" class="flex flex-col items-center justify-center p-4">
                 <p class="text-gray-700 mt-4 mb-6" id="usbScanMessage">
                     Click 'Connect USB Device' to open your browser's device selection dialog and grant access.
@@ -338,6 +338,7 @@
                     Connect USB Device
                 </button>
                 <div class="spinner hidden mt-6" id="usbSpinner"></div>
+                <div id="usbInfoDisplay" class="text-left w-full mt-4 space-y-2 text-gray-700 hidden"></div>
             </div>
         </div>
     </div>
@@ -403,6 +404,7 @@
         const usbSpinner = document.getElementById('usbSpinner');
         const usbScanMessage = document.getElementById('usbScanMessage');
         const connectUsbDeviceButton = document.getElementById('connectUsbDeviceButton');
+        const usbInfoDisplay = document.getElementById('usbInfoDisplay');
 
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
@@ -1120,35 +1122,47 @@
 
         scanNowButton.addEventListener('click', async function() {
             usbScanModal.classList.remove('hidden');
-            usbScanModalTitle.textContent = 'Connect USB Devices';
+            usbScanModalTitle.textContent = 'Get USB Info';
             usbSpinner.classList.add('hidden'); // Hide spinner initially
             usbScanMessage.textContent = 'Click \'Connect USB Device\' to open your browser\'s device selection dialog and grant access.';
             connectUsbDeviceButton.classList.remove('hidden'); // Show connect button
             usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
-            usbScanModalContent.classList.add('flex-col'); // Ensure flex-col for initial layout
+            usbScanModalContent.classList.add('flex-col'); 
+            usbInfoDisplay.classList.add('hidden'); // Hide previous info
+            usbInfoDisplay.innerHTML = ''; // Clear previous info
         });
 
         connectUsbDeviceButton.addEventListener('click', async function() {
-            usbSpinner.classList.remove('hidden'); // Show spinner when attempting connection
+            usbSpinner.classList.remove('hidden'); 
             usbScanMessage.textContent = 'Awaiting device selection...';
-            connectUsbDeviceButton.classList.add('hidden'); // Hide the connect button while trying
+            connectUsbDeviceButton.classList.add('hidden'); 
+            usbInfoDisplay.classList.add('hidden'); 
 
-            let usbCount = 0;
             let errorMessage = '';
 
             try {
                 if ('usb' in navigator) {
-                    const device = await navigator.usb.requestDevice({ filters: [] }); // Request any device
+                    const device = await navigator.usb.requestDevice({ filters: [] }); 
                     if (device) {
-                        // If a device is selected, we can count it.
-                        // For simplicity, we just count the single device selected.
-                        // To count *all* previously granted devices, you'd use getDevices() later.
-                        usbCount = 1; 
-                        usbScanMessage.textContent = `Successfully connected to 1 USB device: ${device.productName || 'Unknown Device'}.`;
-                        usbScanModalTitle.textContent = 'USB Connected!';
+                        usbScanModalTitle.textContent = 'USB Info Retrieved!';
+                        usbScanMessage.textContent = 'Details for the connected USB device:';
+                        
+                        let infoHtml = `
+                            <p><strong class="font-bold">Product Name:</strong> ${device.productName || 'N/A'}</p>
+                            <p><strong class="font-bold">Manufacturer:</strong> ${device.manufacturerName || 'N/A'}</p>
+                            <p><strong class="font-bold">Vendor ID:</strong> 0x${device.vendorId.toString(16).padStart(4, '0').toUpperCase()}</p>
+                            <p><strong class="font-bold">Product ID:</strong> 0x${device.productId.toString(16).padStart(4, '0').toUpperCase()}</p>
+                            <p><strong class="font-bold">Serial Number:</strong> ${device.serialNumber || 'N/A'}</p>
+                            <p><strong class="font-bold">USB Version:</strong> ${device.usbVersionMajor}.${device.usbVersionMinor}.${device.usbVersionSubminor}</p>
+                            <p><strong class="font-bold">Device Class:</strong> 0x${device.deviceClass.toString(16).padStart(2, '0').toUpperCase()}</p>
+                            <p><strong class="font-bold">Device Subclass:</strong> 0x${device.deviceSubclass.toString(16).padStart(2, '0').toUpperCase()}</p>
+                            <p><strong class="font-bold">Device Protocol:</strong> 0x${device.deviceProtocol.toString(16).padStart(2, '0').toUpperCase()}</p>
+                        `;
+
+                        usbInfoDisplay.innerHTML = infoHtml;
+                        usbInfoDisplay.classList.remove('hidden');
                         usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
                     } else {
-                        // This branch is usually hit if the user cancels the prompt directly.
                         errorMessage = 'No USB device selected or connection cancelled.';
                         usbScanModalTitle.textContent = 'Connection Cancelled';
                         usbScanModalContent.classList.add('text-red-600', 'font-semibold');
@@ -1173,13 +1187,11 @@
                 usbScanModalContent.classList.add('text-red-600', 'font-semibold');
             } finally {
                 usbSpinner.classList.add('hidden');
-                usbScanMessage.textContent = errorMessage || usbScanMessage.textContent; // Update message with error if any
-                if (!errorMessage && usbCount === 0) {
-                     usbScanMessage.textContent = 'No USB devices were connected.';
-                     usbScanModalTitle.textContent = 'No Devices Connected';
+                usbScanMessage.textContent = errorMessage || usbScanMessage.textContent; 
+                // Restore button visibility if there was an error or no device was connected
+                if (errorMessage || !device) { 
+                    connectUsbDeviceButton.classList.remove('hidden');
                 }
-                // Optional: Re-show the button if they want to try again, or just let them close
-                // connectUsbDeviceButton.classList.remove('hidden'); 
             }
         });
 
