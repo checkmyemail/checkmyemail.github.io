@@ -6,6 +6,8 @@
     <title>Check if my email service is working</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- hCaptcha script -->
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -43,14 +45,51 @@
             cursor: pointer;
             color: inherit; /* Inherit color from parent message box */
             opacity: 0.7;
-            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; /* Added transform for hover effect */
-            font-size: 1.25rem; /* Adjust font size for the new icon */
-            font-weight: bold; /* Make the icon bolder */
-            line-height: 1; /* Adjust line height to center vertically */
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+            font-size: 1.25rem;
+            font-weight: bold;
+            line-height: 1;
         }
         #messageBox .question-mark-button:hover {
             opacity: 1;
-            transform: scale(1.1); /* Scale up on hover */
+            transform: scale(1.1);
+        }
+        /* New styles for the unlimited tests notification banner */
+        #unlimitedTestsBanner {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 90%;
+            max-width: 320px; /* Keep it compact */
+            background: linear-gradient(to right, #4F46E5, #8B5CF6); /* Purple gradient */
+            color: white;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            z-index: 900; /* Below modals, above other elements */
+            transform: translateX(120%); /* Start off-screen to the right */
+            transition: transform 0.5s ease-out; /* Smooth slide transition */
+        }
+        #unlimitedTestsBanner.show {
+            transform: translateX(0); /* Slide into view */
+        }
+        #unlimitedTestsBanner .dismiss-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        #unlimitedTestsBanner .dismiss-button:hover {
+            opacity: 1;
         }
     </style>
 </head>
@@ -96,7 +135,19 @@
         </div>
     </div>
 
-    <!-- The 'howItWorksModal' and its related content have been removed -->
+    <!-- Unlimited Tests Notification Banner -->
+    <div id="unlimitedTestsBanner" class="hidden">
+        <button class="dismiss-button" id="dismissUnlimitedTestsBanner">
+            &times;
+        </button>
+        <h2 class="text-xl font-bold mb-2">Get Unlimited Tests!</h2>
+        <p class="text-sm mb-4">
+            Complete the hCaptcha challenge to get unlimited test emails daily.
+        </p>
+        <button id="getUnlimitedTestsButton" class="w-full px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition duration-200 shadow-md">
+            Complete Challenge
+        </button>
+    </div>
 
     <div id="businessEmailBanner" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex flex-col sm:flex-row items-center justify-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4 shadow-xl rounded-t-lg z-50 opacity-100 transition-opacity duration-500 ease-out">
         <p class="text-base font-semibold text-center sm:text-left">
@@ -138,6 +189,29 @@
         </div>
     </div>
 
+    <!-- hCaptcha Modal -->
+    <div id="hCaptchaModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="closeHCaptchaModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Verify You're Not a Robot</h2>
+            <div class="flex justify-center my-6">
+                <div class="h-captcha" data-sitekey="ee3c369e-9fb4-424c-8ad6-10c414fa6dac" data-callback="onHCaptchaSuccess" data-error-callback="onHCaptchaError"></div>
+            </div>
+            <div id="hCaptchaMessage" class="mt-4 p-3 rounded-lg hidden text-sm font-medium text-center"></div>
+        </div>
+    </div>
+
+    <!-- Video Overlay for Success Animation -->
+    <div id="successVideoOverlay" class="modal-overlay hidden z-[1100]"> <!-- Higher z-index to ensure it's on top -->
+        <video id="successVideo" class="max-w-full max-h-full rounded-lg shadow-xl" autoplay muted playsinline>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
     <script>
         const webhookForm = document.getElementById('webhookForm');
         const emailInput = document.getElementById('emailInput');
@@ -157,17 +231,77 @@
         const closeLimitInfoModal = document.getElementById('closeLimitInfoModal');
         const modalCountdownContainer = document.getElementById('modalCountdownContainer');
         const modalCountdownDisplay = document.getElementById('modalCountdownDisplay');
-        // Removed webhookUrlDisplay variable as the element it references has been removed
-        // const webhookUrlDisplay = document.getElementById('webhookUrlDisplay');
+
+        const unlimitedTestsBanner = document.getElementById('unlimitedTestsBanner');
+        const dismissUnlimitedTestsBanner = document.getElementById('dismissUnlimitedTestsBanner');
+        const getUnlimitedTestsButton = document.getElementById('getUnlimitedTestsButton');
+
+        const hCaptchaModal = document.getElementById('hCaptchaModal');
+        const closeHCaptchaModal = document.getElementById('closeHCaptchaModal');
+        const hCaptchaMessage = document.getElementById('hCaptchaMessage');
+
+        // New video elements
+        const successVideoOverlay = document.getElementById('successVideoOverlay');
+        const successVideo = document.getElementById('successVideo');
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
         const SRC_PARAM_WEBHOOK_URL = 'https://eor9n5ln3tor0v8.m.pipedream.net';
         const SRC_PARAM_VALUE = 'https://webinfofinder.github.io/';
         const LAST_SENT_KEY = 'lastEmailSentDateUTC';
+        const UNLIMITED_BANNER_DISMISSED_KEY = 'unlimitedBannerDismissed';
 
         let countdownInterval;
+        let isUnlimitedTestsActive = false; // Session-based flag
+
+        window.onHCaptchaSuccess = function(token) {
+            console.log('hCaptcha success! Token:', token);
+            isUnlimitedTestsActive = true; // Set session flag
+            
+            hCaptchaMessage.textContent = 'Verification successful! You now have unlimited tests.';
+            hCaptchaMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800');
+            hCaptchaMessage.classList.add('bg-green-100', 'text-green-800');
+            
+            // Immediately close hCaptcha modal
+            hCaptchaModal.classList.add('hidden');
+            hCaptchaMessage.classList.add('hidden'); // Hide message
+
+            // Hide the unlimited tests banner and set dismissal for persistence
+            unlimitedTestsBanner.classList.remove('show');
+            unlimitedTestsBanner.classList.add('hidden');
+            localStorage.setItem(UNLIMITED_BANNER_DISMISSED_KEY, 'true'); 
+            
+            localStorage.removeItem(LAST_SENT_KEY); // Clear any existing daily limit date
+
+            // Show and play the video
+            successVideoOverlay.classList.remove('hidden');
+            successVideo.src = 'https://ik.imagekit.io/taroctbnm/Animation%20-%201749301051140.webm/ik-video.mp4?updatedAt=1749301179099';
+            successVideo.play().catch(error => {
+                console.error("Video playback failed:", error);
+                // If video fails to play, hide the overlay immediately
+                successVideoOverlay.classList.add('hidden');
+                successVideo.src = '';
+            });
+
+            // Set up listener to hide video when it ends
+            successVideo.onended = () => {
+                successVideoOverlay.classList.add('hidden');
+                successVideo.src = ''; // Clear src to stop loading/playing
+            };
+        };
+
+        window.onHCaptchaError = function(error) {
+            console.error('hCaptcha error:', error);
+            isUnlimitedTestsActive = false; // Ensure session flag is false on error
+            hCaptchaMessage.textContent = 'Verification failed. Please try again.';
+            hCaptchaMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800');
+            hCaptchaMessage.classList.add('bg-red-100', 'text-red-800');
+        };
 
         function hasSentEmailTodayUTC() {
+            if (isUnlimitedTestsActive) { // Check session flag first
+                return false; 
+            }
+
             const lastSentDateString = localStorage.getItem(LAST_SENT_KEY);
             if (!lastSentDateString) {
                 return false;
@@ -219,6 +353,10 @@
                     if (modalCountdownContainer) {
                         modalCountdownContainer.classList.add('hidden');
                     }
+                    if (!isUnlimitedTestsActive && localStorage.getItem(UNLIMITED_BANNER_DISMISSED_KEY) !== 'true') {
+                        unlimitedTestsBanner.classList.remove('hidden');
+                        setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
+                    }
                     return;
                 }
 
@@ -236,12 +374,13 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Removed initialization of webhookUrlDisplay.textContent as the element is removed
-            // webhookUrlDisplay.textContent = DEFAULT_WEBHOOK_URL;
+            if (!isUnlimitedTestsActive && localStorage.getItem(UNLIMITED_BANNER_DISMISSED_KEY) !== 'true') {
+                unlimitedTestsBanner.classList.remove('hidden');
+                setTimeout(() => unlimitedTestsBanner.classList.add('show'), 100);
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Log parameter values for debugging
             console.log('URL Parameter: hidebanner =', urlParams.get('hidebanner'));
             console.log('URL Parameter: src =', urlParams.get('src'));
 
@@ -319,7 +458,7 @@
             hideMessage();
             setButtonState(true);
 
-            if (hasSentEmailTodayUTC()) {
+            if (!isUnlimitedTestsActive && hasSentEmailTodayUTC()) {
                 showMessage('You can only send one test email per UTC day. Calculating next availability...', 'error');
                 startCountdown();
                 setButtonState(false);
@@ -340,7 +479,9 @@
                 });
 
                 if (response.ok) {
-                    updateLastSentDateUTC();
+                    if (!isUnlimitedTestsActive) {
+                        updateLastSentDateUTC();
+                    }
                     showMessage(`Test email successfully sent to: <span class="font-bold">${recipientEmail}</span>. Please check your inbox.`, 'success');
                 } else {
                     const errorText = await response.text();
@@ -353,7 +494,6 @@
             }
         });
 
-        // Changed viewInfoButton functionality
         viewInfoButton.addEventListener('click', function() {
             window.location.href = 'dev.html';
         });
@@ -391,6 +531,30 @@
                 if (modalCountdownContainer) {
                     modalCountdownContainer.classList.add('hidden');
                 }
+            }
+        });
+
+        dismissUnlimitedTestsBanner.addEventListener('click', function() {
+            unlimitedTestsBanner.classList.remove('show');
+            unlimitedTestsBanner.classList.add('hidden');
+            localStorage.setItem(UNLIMITED_BANNER_DISMISSED_KEY, 'true');
+        });
+
+        getUnlimitedTestsButton.addEventListener('click', function() {
+            hCaptchaModal.classList.remove('hidden');
+            hCaptchaMessage.classList.add('hidden');
+            hcaptcha.reset();
+        });
+
+        closeHCaptchaModal.addEventListener('click', function() {
+            hCaptchaModal.classList.add('hidden');
+            hcaptcha.reset();
+        });
+
+        hCaptchaModal.addEventListener('click', function(event) {
+            if (event.target === hCaptchaModal) {
+                hCaptchaModal.classList.add('hidden');
+                hcaptcha.reset();
             }
         });
     </script>
