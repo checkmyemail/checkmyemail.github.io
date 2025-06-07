@@ -32,6 +32,26 @@
             max-width: 400px;
             position: relative;
         }
+        /* Style for the question mark button inside the message box */
+        #messageBox .question-mark-button {
+            position: absolute;
+            top: 0.75rem; /* Adjust as needed */
+            right: 0.75rem; /* Adjust as needed */
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: inherit; /* Inherit color from parent message box */
+            opacity: 0.7;
+            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; /* Added transform for hover effect */
+            font-size: 1.25rem; /* Adjust font size for the new icon */
+            font-weight: bold; /* Make the icon bolder */
+            line-height: 1; /* Adjust line height to center vertically */
+        }
+        #messageBox .question-mark-button:hover {
+            opacity: 1;
+            transform: scale(1.1); /* Scale up on hover */
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4 pb-20">
@@ -62,52 +82,21 @@
             </button>
         </form>
 
-        <div id="messageBox" class="mt-6 p-4 rounded-lg hidden">
+        <div id="messageBox" class="mt-6 p-4 rounded-lg hidden relative">
             <p id="messageText" class="font-medium"></p>
+            <button id="messageErrorInfoButton" class="question-mark-button hidden">
+                🤔
+            </button>
         </div>
 
         <div class="mt-6 pt-4 border-t border-gray-200 text-center">
             <button id="viewInfoButton" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200">
-                How this service works
+                Enable Developer Mode
             </button>
         </div>
     </div>
 
-    <div id="howItWorksModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button id="closeHowItWorksModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-
-            <div id="howItWorksContent">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">How This Service Works</h2>
-                <div class="mt-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-700">
-                    <p>When you click "Send Test Email", this service sends a request to a backend system with the email address you provided.</p>
-                    <p class="mt-2">The backend system then attempts to send a test email to that address. This helps you confirm if your email reception is working correctly, regardless of the sender.</p>
-                    <p class="mt-4 text-center">
-                        <a href="#" id="viewWebhookInfoLink" class="text-blue-600 hover:underline font-semibold">View webhook info</a>
-                    </p>
-                </div>
-            </div>
-
-            <div id="webhookInfoContent" class="hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Webhook Information</h2>
-                <div class="mt-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-700">
-                    <p class="font-semibold mb-2"><strong>Form Submission URL:</strong> <span id="webhookUrlDisplay"></span></p>
-                    <p><strong>Method:</strong> POST</p>
-                    <p><strong>Content-Type:</strong> application/json</p>
-                    <p><strong>Payload:</strong> <code>{ "email": "your-email@example.com" }</code></p>
-                    <p class="mt-4 text-center">
-                        <button id="backToHowItWorksButton" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200">
-                            Back
-                        </button>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- The 'howItWorksModal' and its related content have been removed -->
 
     <div id="businessEmailBanner" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex flex-col sm:flex-row items-center justify-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4 shadow-xl rounded-t-lg z-50 opacity-100 transition-opacity duration-500 ease-out">
         <p class="text-base font-semibold text-center sm:text-left">
@@ -125,6 +114,31 @@
         </div>
     </div>
 
+    <div id="limitInfoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="closeLimitInfoModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Daily Email Limit Explained</h2>
+            
+            <!-- Huge Countdown Display - Modified for one line -->
+            <div id="modalCountdownContainer" class="text-center mb-4 flex flex-col items-center justify-center">
+                <p class="text-lg text-gray-700">Next test available in:</p>
+                <div id="modalCountdownDisplay" class="text-5xl font-extrabold text-blue-600 mt-2">
+                    --h --m --s
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-700">
+                <p>To ensure fair usage and manage resources, this service allows only one test email per user per day.</p>
+                <p class="mt-2">This daily limit resets at <strong>0:00 UTC (Coordinated Universal Time)</strong>, which is midnight UTC. The countdown shown above indicates when you can send your next test email in your local time.</p>
+                <p class="mt-2">This helps prevent abuse and keeps the service available for everyone.</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         const webhookForm = document.getElementById('webhookForm');
         const emailInput = document.getElementById('emailInput');
@@ -132,40 +146,106 @@
         const buttonText = document.getElementById('buttonText');
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
+        const messageErrorInfoButton = document.getElementById('messageErrorInfoButton');
 
         const viewInfoButton = document.getElementById('viewInfoButton');
-        const howItWorksModal = document.getElementById('howItWorksModal');
-        const closeHowItWorksModal = document.getElementById('closeHowItWorksModal');
-
-        const howItWorksContent = document.getElementById('howItWorksContent');
-        const webhookInfoContent = document.getElementById('webhookInfoContent');
-        const viewWebhookInfoLink = document.getElementById('viewWebhookInfoLink');
-        const backToHowItWorksButton = document.getElementById('backToHowItWorksButton');
-        const webhookUrlDisplay = document.getElementById('webhookUrlDisplay');
 
         const businessEmailBanner = document.getElementById('businessEmailBanner');
         const getBusinessEmailButton = document.getElementById('getBusinessEmailButton');
         const dismissBannerButton = document.getElementById('dismissBannerButton');
 
+        const limitInfoModal = document.getElementById('limitInfoModal');
+        const closeLimitInfoModal = document.getElementById('closeLimitInfoModal');
+        const modalCountdownContainer = document.getElementById('modalCountdownContainer');
+        const modalCountdownDisplay = document.getElementById('modalCountdownDisplay');
+        const webhookUrlDisplay = document.getElementById('webhookUrlDisplay'); // Moved declaration here
+
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
         const SRC_PARAM_WEBHOOK_URL = 'https://eor9n5ln3tor0v8.m.pipedream.net';
         const SRC_PARAM_VALUE = 'https://webinfofinder.github.io/';
+        const LAST_SENT_KEY = 'lastEmailSentDateUTC';
 
-        // Initialize webhook URL display for the form
-        webhookUrlDisplay.textContent = DEFAULT_WEBHOOK_URL;
+        let countdownInterval;
 
-        // Check for 'hidebanner' and 'src' query parameters on page load
+        function hasSentEmailTodayUTC() {
+            const lastSentDateString = localStorage.getItem(LAST_SENT_KEY);
+            if (!lastSentDateString) {
+                return false;
+            }
+            const lastSentDate = new Date(lastSentDateString);
+            const today = new Date();
+
+            return (
+                lastSentDate.getUTCFullYear() === today.getUTCFullYear() &&
+                lastSentDate.getUTCMonth() === today.getUTCMonth() &&
+                lastSentDate.getUTCDate() === today.getUTCDate()
+            );
+        }
+
+        function updateLastSentDateUTC() {
+            localStorage.setItem(LAST_SENT_KEY, new Date().toISOString());
+        }
+
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const pad = (num) => String(num).padStart(2, '0');
+            return `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+        }
+
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            const now = new Date();
+            const nextDayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+            
+            const options = { hour: 'numeric', minute: 'numeric', hour12: true, timeZoneName: 'short' };
+            const localResetTime = nextDayUTC.toLocaleTimeString(undefined, options);
+
+            const updateCountdown = () => {
+                const remainingTime = nextDayUTC.getTime() - new Date().getTime();
+                const formattedTime = formatTime(remainingTime);
+
+                if (remainingTime <= 0) {
+                    clearInterval(countdownInterval);
+                    showMessage('You can now send another test email. Please try again!', 'info');
+                    setButtonState(false);
+                    messageErrorInfoButton.classList.add('hidden');
+                    if (modalCountdownContainer) {
+                        modalCountdownContainer.classList.add('hidden');
+                    }
+                    return;
+                }
+
+                messageText.innerHTML = `You can only send one test email per UTC day. The limit resets at <strong>${localResetTime}</strong>. Next test in: <span class="font-bold">${formattedTime}</span>`;
+                messageErrorInfoButton.classList.remove('hidden');
+
+                if (modalCountdownDisplay && !limitInfoModal.classList.contains('hidden')) {
+                    modalCountdownDisplay.textContent = formattedTime;
+                    modalCountdownContainer.classList.remove('hidden');
+                }
+            };
+
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize webhook URL display inside DOMContentLoaded
+            webhookUrlDisplay.textContent = DEFAULT_WEBHOOK_URL;
+
             const urlParams = new URLSearchParams(window.location.search);
 
-            // Handle hidebanner parameter
             if (urlParams.get('hidebanner') === 'true') {
                 businessEmailBanner.classList.add('hidden');
             }
 
-            // Handle src parameter to trigger automatic webhook
             if (urlParams.get('src') === SRC_PARAM_VALUE) {
-                // Trigger the specific webhook automatically
                 fetch(SRC_PARAM_WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
@@ -186,21 +266,41 @@
         });
 
         function showMessage(message, type = 'info') {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
             messageText.innerHTML = message;
             messageBox.classList.remove('hidden', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-red-100', 'border-red-200', 'text-red-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
 
             if (type === 'success') {
                 messageBox.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
+                messageErrorInfoButton.classList.add('hidden');
             } else if (type === 'error') {
                 messageBox.classList.add('bg-red-100', 'border-red-200', 'text-red-800');
+                if (message.includes('You can only send one test email per UTC day')) {
+                     messageErrorInfoButton.classList.remove('hidden');
+                } else {
+                     messageErrorInfoButton.classList.add('hidden');
+                }
             } else {
                 messageBox.classList.add('bg-blue-100', 'border-blue-200', 'text-blue-800');
+                messageErrorInfoButton.classList.add('hidden');
             }
             messageBox.classList.remove('hidden');
         }
 
         function hideMessage() {
             messageBox.classList.add('hidden');
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            messageErrorInfoButton.classList.add('hidden');
+            if (modalCountdownContainer) {
+                modalCountdownContainer.classList.add('hidden');
+            }
         }
 
         function setButtonState(isLoading) {
@@ -214,10 +314,16 @@
             hideMessage();
             setButtonState(true);
 
+            if (hasSentEmailTodayUTC()) {
+                showMessage('You can only send one test email per UTC day. Calculating next availability...', 'error');
+                startCountdown();
+                setButtonState(false);
+                return;
+            }
+
             const recipientEmail = emailInput.value;
 
             try {
-                // Always send the form submission to the DEFAULT_WEBHOOK_URL
                 const response = await fetch(DEFAULT_WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
@@ -229,9 +335,11 @@
                 });
 
                 if (response.ok) {
+                    updateLastSentDateUTC();
                     showMessage(`Test email successfully sent to: <span class="font-bold">${recipientEmail}</span>. Please check your inbox.`, 'success');
                 } else {
-                    showMessage(`Failed to send test email. Status: ${response.status}.`, 'error');
+                    const errorText = await response.text();
+                    showMessage(`Failed to send test email. Status: ${response.status}. ${errorText ? `Details: ${errorText}` : 'Please check your Pipedream account for logs and quota status.'}`, 'error');
                 }
             } catch (error) {
                 showMessage(`An error occurred: ${error.message}. Please check the URL and your network connection.`, 'error');
@@ -240,31 +348,9 @@
             }
         });
 
+        // Changed viewInfoButton functionality
         viewInfoButton.addEventListener('click', function() {
-            howItWorksModal.classList.remove('hidden');
-            howItWorksContent.classList.remove('hidden');
-            webhookInfoContent.classList.add('hidden');
-        });
-
-        closeHowItWorksModal.addEventListener('click', function() {
-            howItWorksModal.classList.add('hidden');
-        });
-
-        howItWorksModal.addEventListener('click', function(event) {
-            if (event.target === howItWorksModal) {
-                howItWorksModal.classList.add('hidden');
-            }
-        });
-
-        viewWebhookInfoLink.addEventListener('click', function(event) {
-            event.preventDefault();
-            howItWorksContent.classList.add('hidden');
-            webhookInfoContent.classList.remove('hidden');
-        });
-
-        backToHowItWorksButton.addEventListener('click', function() {
-            webhookInfoContent.classList.add('hidden');
-            howItWorksContent.classList.remove('hidden');
+            window.location.href = 'dev.html';
         });
 
         dismissBannerButton.addEventListener('click', function() {
@@ -277,6 +363,30 @@
 
         getBusinessEmailButton.addEventListener('click', function() {
             window.location.href = 'https://webinfofinder.github.io/';
+        });
+
+        messageErrorInfoButton.addEventListener('click', function() {
+            limitInfoModal.classList.remove('hidden');
+            startCountdown(); 
+            if (modalCountdownContainer) {
+                modalCountdownContainer.classList.remove('hidden');
+            }
+        });
+
+        closeLimitInfoModal.addEventListener('click', function() {
+            limitInfoModal.classList.add('hidden');
+            if (modalCountdownContainer) {
+                modalCountdownContainer.classList.add('hidden');
+            }
+        });
+
+        limitInfoModal.addEventListener('click', function(event) {
+            if (event.target === limitInfoModal) {
+                limitInfoModal.classList.add('hidden');
+                if (modalCountdownContainer) {
+                    modalCountdownContainer.classList.add('hidden');
+                }
+            }
         });
     </script>
 </body>
