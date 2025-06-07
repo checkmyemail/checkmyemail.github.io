@@ -243,9 +243,7 @@
 
         const viewInfoButton = document.getElementById('viewInfoButton');
         const checkStatusButton = document.getElementById('checkStatusButton');
-        // Removed statusDisplayContainer as it's now inside a modal
-        // const statusDisplayContainer = document.getElementById('statusDisplayContainer'); 
-
+        
         const businessEmailBanner = document.getElementById('businessEmailBanner');
         const getBusinessEmailButton = document.getElementById('getBusinessEmailButton');
         const dismissBannerButton = document.getElementById('dismissBannerButton');
@@ -266,7 +264,6 @@
         const successVideoOverlay = document.getElementById('successVideoOverlay');
         const successVideo = document.getElementById('successVideo');
 
-        // New status modal elements
         const statusModal = document.getElementById('statusModal');
         const closeStatusModal = document.getElementById('closeStatusModal');
         const statusModalContent = document.getElementById('statusModalContent');
@@ -322,6 +319,7 @@
                     hCaptchaMessage.classList.add('hidden');
                 }, 2000); 
 
+                // Call checkStatusAndDisplay to update the status modal after success
                 checkStatusAndDisplay(); 
             }
         };
@@ -430,18 +428,17 @@
             countdownInterval = setInterval(updateCountdown, 1000);
         }
 
-        // Modified checkStatusAndDisplay to target the new status modal
         function checkStatusAndDisplay() {
-            // Open the status modal first
             statusModal.classList.remove('hidden');
             
-            // Clear any previous status countdown interval
             if (statusCountdownInterval) {
                 clearInterval(statusCountdownInterval);
                 statusCountdownInterval = null;
             }
 
-            statusModalContent.innerHTML = ''; // Clear previous content
+            statusModalContent.innerHTML = '';
+            statusModalContent.classList.remove('bg-red-100', 'border-red-200', 'text-red-800', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
+            statusModalContent.classList.add('p-4', 'rounded-lg', 'border'); // Add basic styling
 
             const expiryTimeStr = localStorage.getItem(UNLIMITED_ACCESS_EXPIRY_KEY);
             const expiryTime = expiryTimeStr ? parseInt(expiryTimeStr, 10) : 0;
@@ -449,7 +446,6 @@
 
             if (isUnlimitedTestsActive && now < expiryTime) {
                 // Case 1: Unlimited tests are active
-                statusModalContent.classList.remove('bg-red-100', 'border-red-200', 'text-red-800', 'bg-green-100', 'border-green-200', 'text-green-800');
                 statusModalContent.classList.add('bg-blue-100', 'border-blue-200', 'text-blue-800');
                 
                 const updateUnlimitedCountdown = () => {
@@ -458,24 +454,37 @@
                         clearInterval(statusCountdownInterval);
                         isUnlimitedTestsActive = false;
                         localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-                        checkAndManageUnlimitedAccess(); // Show banner again
-                        statusModal.classList.add('hidden'); // Close status modal on expiry
+                        checkAndManageUnlimitedAccess();
+                        checkStatusAndDisplay(); // Re-render status after expiry
                         return;
                     }
                     let formattedTime = formatTime(remainingMillis);
-                    statusModalContent.innerHTML = `<p class="font-medium text-center">You have unlimited tests for: <span class="font-bold">${formattedTime}</span></p>`;
+                    statusModalContent.innerHTML = `
+                        <p class="font-medium text-center">You have unlimited tests for: <span class="font-bold">${formattedTime}</span></p>
+                        <button id="endUnlimitedButton" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200">
+                            End Now
+                        </button>
+                    `;
+                    const endUnlimitedButton = document.getElementById('endUnlimitedButton');
+                    if (endUnlimitedButton) {
+                        endUnlimitedButton.onclick = function() {
+                            isUnlimitedTestsActive = false;
+                            localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
+                            checkAndManageUnlimitedAccess(); // Show banner again
+                            checkStatusAndDisplay(); // Re-render status after manual end
+                        };
+                    }
                 };
                 updateUnlimitedCountdown();
                 statusCountdownInterval = setInterval(updateUnlimitedCountdown, 1000);
 
             } else {
                 // Case 2: Unlimited tests are NOT active
-                isUnlimitedTestsActive = false; // Ensure flag is false
-                localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY); // Clean up expired key
+                isUnlimitedTestsActive = false;
+                localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
 
                 if (hasSentEmailTodayUTC()) {
                     // Sub-case 2.1: No tests left based on daily limit
-                    statusModalContent.classList.remove('bg-blue-100', 'border-blue-200', 'text-blue-800', 'bg-green-100', 'border-green-200', 'text-green-800');
                     statusModalContent.classList.add('bg-red-100', 'border-red-200', 'text-red-800');
                     
                     const updateDailyCountdown = () => {
@@ -487,7 +496,7 @@
 
                         if (remainingTime <= 0) {
                             clearInterval(statusCountdownInterval);
-                            checkStatusAndDisplay(); // Re-evaluate to show "1 test left"
+                            checkStatusAndDisplay(); 
                             return;
                         }
 
@@ -508,20 +517,18 @@
                                 hCaptchaModal.classList.remove('hidden');
                                 hCaptchaMessage.classList.add('hidden');
                                 hcaptcha.reset();
-                                statusModal.classList.add('hidden'); // Close status modal when challenge starts
+                                statusModal.classList.add('hidden'); 
                             };
                         }
                     };
                     updateDailyCountdown();
                     statusCountdownInterval = setInterval(updateDailyCountdown, 1000);
 
-                    // Ensure the main unlimited banner is also visible
                     unlimitedTestsBanner.classList.remove('hidden');
                     setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
 
                 } else {
                     // Sub-case 2.2: 1 test left
-                    statusModalContent.classList.remove('bg-blue-100', 'border-blue-200', 'text-blue-800', 'bg-red-100', 'border-red-200', 'text-red-800');
                     statusModalContent.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
                     statusModalContent.innerHTML = `
                         <p class="font-medium text-center">You have 1 test left for today.</p>
@@ -539,10 +546,9 @@
                             hCaptchaModal.classList.remove('hidden');
                             hCaptchaMessage.classList.add('hidden');
                             hcaptcha.reset();
-                            statusModal.classList.add('hidden'); // Hide status modal when challenge starts
+                            statusModal.classList.add('hidden'); 
                         });
                     }
-                    // Ensure the main unlimited banner is also visible
                     unlimitedTestsBanner.classList.remove('hidden');
                     setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
                 }
@@ -745,10 +751,8 @@
             }
         });
 
-        // Event listeners for the new status modal
         closeStatusModal.addEventListener('click', function() {
             statusModal.classList.add('hidden');
-            // Clear status countdown when modal closes
             if (statusCountdownInterval) {
                 clearInterval(statusCountdownInterval);
                 statusCountdownInterval = null;
@@ -758,7 +762,6 @@
         statusModal.addEventListener('click', function(event) {
             if (event.target === statusModal) {
                 statusModal.classList.add('hidden');
-                // Clear status countdown when modal closes
                 if (statusCountdownInterval) {
                     clearInterval(statusCountdownInterval);
                     statusCountdownInterval = null;
