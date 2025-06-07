@@ -246,7 +246,7 @@
                 </svg>
             </button>
             <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Verify You're Not a Robot</h2>
-            <div class="flex justify-center my-6">
+            <div id="hcaptchaWidgetContainer" class="flex justify-center my-6">
                 <div class="h-captcha" data-sitekey="ee3c369e-9fb4-424c-8ad6-10c414fa6dac" data-callback="onHCaptchaSuccess" data-error-callback="onHCaptchaError"></div>
             </div>
             <div id="hCaptchaMessage" class="mt-4 p-3 rounded-lg hidden text-sm font-medium text-center"></div>
@@ -343,6 +343,34 @@
         </div>
     </div>
 
+    <!-- Cookie Consent Modal -->
+    <div id="cookieConsentModal" class="modal-overlay hidden">
+        <div class="modal-content text-center p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Your Privacy Matters!</h2>
+            <p class="text-gray-700 text-base mb-6">
+                This website uses cookies to enhance your experience and provide essential functionality.
+                We use cookies for:
+            </p>
+            <ul class="text-left text-gray-600 mb-6 space-y-2 list-disc list-inside">
+                <li>Remembering your preferences (e.g., dismissing banners).</li>
+                <li>Enabling features like unlimited email tests after hCaptcha verification.</li>
+                <li>Ensuring the site functions correctly and efficiently.</li>
+            </ul>
+            <p class="text-gray-700 text-base mb-6">
+                By clicking "Got It!", you consent to the use of these cookies.
+                If you decline, some features may be unavailable.
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button id="acceptCookiesButton" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow-md">
+                    Got It!
+                </button>
+                <button id="declineCookiesButton" class="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-200 shadow-md">
+                    Decline
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const webhookForm = document.getElementById('webhookForm');
@@ -377,6 +405,7 @@
 
         const hCaptchaModal = document.getElementById('hCaptchaModal');
         const closeHCaptchaModal = document.getElementById('closeHCaptchaModal');
+        const hcaptchaWidgetContainer = document.getElementById('hcaptchaWidgetContainer'); // Added ID for hCaptcha container
         const hCaptchaMessage = document.getElementById('hCaptchaMessage');
 
         const successVideoOverlay = document.getElementById('successVideoOverlay');
@@ -405,6 +434,12 @@
         const usbScanMessage = document.getElementById('usbScanMessage');
         const connectUsbDeviceButton = document.getElementById('connectUsbDeviceButton');
         const usbInfoDisplay = document.getElementById('usbInfoDisplay');
+
+        // Cookie Consent Modal elements
+        const cookieConsentModal = document.getElementById('cookieConsentModal');
+        const acceptCookiesButton = document.getElementById('acceptCookiesButton');
+        const declineCookiesButton = document.getElementById('declineCookiesButton'); // New decline button
+        const COOKIE_CONSENT_KEY = 'cookieConsentAccepted'; // 'true' or 'false'
 
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
@@ -532,6 +567,7 @@
         window.onHCaptchaSuccess = function(token) {
             console.log('hCaptcha success! Token:', token);
             hCaptchaMessage.classList.add('hidden');
+            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible
 
             if (isDeveloperModeChallengeActive) {
                 isDeveloperModeChallengeActive = false;
@@ -580,6 +616,7 @@
             console.error('hCaptcha error:', error);
             isUnlimitedTestsActive = false; 
             isDeveloperModeChallengeActive = false; 
+            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible
 
             hCaptchaMessage.textContent = 'Verification failed. Please try again.';
             hCaptchaMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800');
@@ -785,9 +822,7 @@
                         if (statusGetUnlimitedButton) {
                             statusGetUnlimitedButton.onclick = function() {
                                 isDeveloperModeChallengeActive = false; 
-                                hCaptchaModal.classList.remove('hidden');
-                                hCaptchaMessage.classList.add('hidden');
-                                hcaptcha.reset();
+                                handleHCaptchaInitiation(); // Use the new handler
                                 statusModal.classList.add('hidden'); 
                             };
                         }
@@ -818,9 +853,7 @@
                     if (statusGetUnlimitedButton) {
                         statusGetUnlimitedButton.addEventListener('click', function() {
                             isDeveloperModeChallengeActive = false; 
-                            hCaptchaModal.classList.remove('hidden');
-                            hCaptchaMessage.classList.add('hidden');
-                            hcaptcha.reset();
+                            handleHCaptchaInitiation(); // Use the new handler
                             statusModal.classList.add('hidden'); 
                         });
                     }
@@ -832,6 +865,36 @@
                         setTimeout(() => usbCounterBanner.classList.add('show'), 50);
                     }, 5000);
                 }
+            }
+        }
+
+        // New function to handle hCaptcha initiation with cookie check
+        function handleHCaptchaInitiation() {
+            const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+
+            hCaptchaModal.classList.remove('hidden');
+            hCaptchaMessage.classList.add('hidden'); // Hide any previous messages
+            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure widget container is visible initially
+
+            if (cookieConsent !== 'true') {
+                hcaptchaWidgetContainer.classList.add('hidden'); // Hide the hCaptcha widget
+                hCaptchaMessage.innerHTML = `
+                    <p class="text-red-600 font-semibold mb-4">Cookies are required to use this feature.</p>
+                    <p class="text-gray-700 text-sm mb-4">
+                        Please accept cookies to proceed with verification.
+                    </p>
+                    <button id="showCookiePopupBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-md">
+                        Show Cookie Popup
+                    </button>
+                `;
+                hCaptchaMessage.classList.remove('hidden');
+                
+                document.getElementById('showCookiePopupBtn').onclick = function() {
+                    hCaptchaModal.classList.add('hidden'); // Hide hCaptcha modal
+                    cookieConsentModal.classList.remove('hidden'); // Show cookie consent modal
+                };
+            } else {
+                hcaptcha.reset(); // Reset hCaptcha if cookies are consented
             }
         }
 
@@ -866,6 +929,12 @@
                 }).catch(error => {
                     console.error('Error during automatic webhook call:', error);
                 });
+            }
+
+            // Show cookie consent modal if not already accepted or explicitly declined
+            const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+            if (cookieConsent === null || cookieConsent === 'false') {
+                cookieConsentModal.classList.remove('hidden');
             }
         });
 
@@ -960,9 +1029,7 @@
 
         viewInfoButton.addEventListener('click', function() {
             isDeveloperModeChallengeActive = true; 
-            hCaptchaModal.classList.remove('hidden');
-            hCaptchaMessage.classList.add('hidden');
-            hcaptcha.reset(); 
+            handleHCaptchaInitiation(); // Use the new handler
         });
 
         dismissBannerButton.addEventListener('click', function() {
@@ -1008,14 +1075,14 @@
 
         getUnlimitedTestsButton.addEventListener('click', function() {
             isDeveloperModeChallengeActive = false; 
-            hCaptchaModal.classList.remove('hidden');
-            hCaptchaMessage.classList.add('hidden');
-            hcaptcha.reset();
+            handleHCaptchaInitiation(); // Use the new handler
         });
 
         closeHCaptchaModal.addEventListener('click', function() {
             hCaptchaModal.classList.add('hidden');
-            hcaptcha.reset();
+            hcaptcha.reset(); // Reset hCaptcha state
+            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible for next time
+            hCaptchaMessage.classList.add('hidden'); // Hide message
             if (isDeveloperModeChallengeActive) { 
                 isDeveloperModeChallengeActive = false;
             }
@@ -1025,6 +1092,8 @@
             if (event.target === hCaptchaModal) {
                 hCaptchaModal.classList.add('hidden');
                 hcaptcha.reset();
+                hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible for next time
+                hCaptchaMessage.classList.add('hidden'); // Hide message
                 if (isDeveloperModeChallengeActive) { 
                     isDeveloperModeChallengeActive = false;
                 }
@@ -1062,7 +1131,8 @@
             console.log("User confirmed voice input. Starting dictation...");
             try {
                 recognition.start();
-            } catch (e) {
+            }
+            catch (e) {
                 if (e.message.includes("recognition has already started")) {
                     showMessage("Voice recognition is already active.", "info");
                 } else {
@@ -1188,7 +1258,6 @@
             } finally {
                 usbSpinner.classList.add('hidden');
                 usbScanMessage.textContent = errorMessage || usbScanMessage.textContent; 
-                // Restore button visibility if there was an error or no device was connected
                 if (errorMessage || !device) { 
                     connectUsbDeviceButton.classList.remove('hidden');
                 }
@@ -1202,6 +1271,39 @@
         usbScanModal.addEventListener('click', function(event) {
             if (event.target === usbScanModal) {
                 usbScanModal.classList.add('hidden');
+            }
+        });
+
+        // Cookie Consent Modal Listeners
+        acceptCookiesButton.addEventListener('click', function() {
+            localStorage.setItem(COOKIE_CONSENT_KEY, 'true');
+            cookieConsentModal.classList.add('hidden');
+            // If the hCaptcha modal is open with a cookie message, re-evaluate it
+            if (!hCaptchaModal.classList.contains('hidden')) {
+                handleHCaptchaInitiation();
+            }
+        });
+
+        declineCookiesButton.addEventListener('click', function() {
+            localStorage.setItem(COOKIE_CONSENT_KEY, 'false');
+            cookieConsentModal.classList.add('hidden');
+            showMessage("You have declined cookies. Some features, like hCaptcha verification, may not be available.", "info");
+            // If the hCaptcha modal is open with a cookie message, re-evaluate it
+            if (!hCaptchaModal.classList.contains('hidden')) {
+                handleHCaptchaInitiation();
+            }
+        });
+
+        cookieConsentModal.addEventListener('click', function(event) {
+            if (event.target === cookieConsentModal) {
+                // If user clicks outside the content, treat as dismissal (decline for hCaptcha context)
+                localStorage.setItem(COOKIE_CONSENT_KEY, 'false');
+                cookieConsentModal.classList.add('hidden');
+                showMessage("You have declined cookies. Some features, like hCaptcha verification, may not be available.", "info");
+                // If the hCaptcha modal is open with a cookie message, re-evaluate it
+                if (!hCaptchaModal.classList.contains('hidden')) {
+                    handleHCaptchaInitiation();
+                }
             }
         });
     </script>
