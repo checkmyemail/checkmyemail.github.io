@@ -329,10 +329,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4" id="usbScanModalTitle">Counting USBs...</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4" id="usbScanModalTitle">Connect USB Devices</h2>
             <div id="usbScanModalContent" class="flex flex-col items-center justify-center p-4">
-                <div class="spinner" id="usbSpinner"></div>
-                <p class="text-gray-700 mt-4" id="usbScanMessage">Attempting to detect connected USB devices.</p>
+                <p class="text-gray-700 mt-4 mb-6" id="usbScanMessage">
+                    Click 'Connect USB Device' to open your browser's device selection dialog and grant access.
+                </p>
+                <button id="connectUsbDeviceButton" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-md">
+                    Connect USB Device
+                </button>
+                <div class="spinner hidden mt-6" id="usbSpinner"></div>
             </div>
         </div>
     </div>
@@ -397,6 +402,7 @@
         const usbScanModalContent = document.getElementById('usbScanModalContent');
         const usbSpinner = document.getElementById('usbSpinner');
         const usbScanMessage = document.getElementById('usbScanMessage');
+        const connectUsbDeviceButton = document.getElementById('connectUsbDeviceButton');
 
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
@@ -1114,53 +1120,66 @@
 
         scanNowButton.addEventListener('click', async function() {
             usbScanModal.classList.remove('hidden');
-            usbScanModalTitle.textContent = 'Counting USBs...';
-            usbSpinner.classList.remove('hidden');
-            usbScanMessage.textContent = 'Attempting to detect connected USB devices.';
+            usbScanModalTitle.textContent = 'Connect USB Devices';
+            usbSpinner.classList.add('hidden'); // Hide spinner initially
+            usbScanMessage.textContent = 'Click \'Connect USB Device\' to open your browser\'s device selection dialog and grant access.';
+            connectUsbDeviceButton.classList.remove('hidden'); // Show connect button
+            usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
+            usbScanModalContent.classList.add('flex-col'); // Ensure flex-col for initial layout
+        });
+
+        connectUsbDeviceButton.addEventListener('click', async function() {
+            usbSpinner.classList.remove('hidden'); // Show spinner when attempting connection
+            usbScanMessage.textContent = 'Awaiting device selection...';
+            connectUsbDeviceButton.classList.add('hidden'); // Hide the connect button while trying
 
             let usbCount = 0;
             let errorMessage = '';
 
             try {
-                // Feature detection for WebUSB API
                 if ('usb' in navigator) {
-                    // This requests permission for ANY USB device.
-                    // In a real scenario, you'd specify filters for known vendors/products.
-                    // For demonstration, we'll try to get all allowed devices.
-                    const devices = await navigator.usb.getDevices();
-                    usbCount = devices.length;
-
-                    if (usbCount > 0) {
-                        usbScanMessage.textContent = `Found ${usbCount} USB device(s).`;
+                    const device = await navigator.usb.requestDevice({ filters: [] }); // Request any device
+                    if (device) {
+                        // If a device is selected, we can count it.
+                        // For simplicity, we just count the single device selected.
+                        // To count *all* previously granted devices, you'd use getDevices() later.
+                        usbCount = 1; 
+                        usbScanMessage.textContent = `Successfully connected to 1 USB device: ${device.productName || 'Unknown Device'}.`;
+                        usbScanModalTitle.textContent = 'USB Connected!';
+                        usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
                     } else {
-                        usbScanMessage.textContent = 'No USB devices found or permission not granted. Try connecting a device and allowing access.';
+                        // This branch is usually hit if the user cancels the prompt directly.
+                        errorMessage = 'No USB device selected or connection cancelled.';
+                        usbScanModalTitle.textContent = 'Connection Cancelled';
+                        usbScanModalContent.classList.add('text-red-600', 'font-semibold');
                     }
                 } else {
                     errorMessage = 'WebUSB API not supported in this browser or environment.';
+                    usbScanModalTitle.textContent = 'Feature Not Supported';
+                    usbScanModalContent.classList.add('text-red-600', 'font-semibold');
                 }
             } catch (error) {
-                console.error("USB scan error:", error);
+                console.error("USB connection error:", error);
                 if (error.name === 'NotFoundError') {
-                    errorMessage = 'No USB device selected or found. Please connect a device and try again.';
+                    errorMessage = 'No USB device found or selected. Connect a device and try again.';
+                    usbScanModalTitle.textContent = 'Device Not Found';
                 } else if (error.name === 'SecurityError') {
-                    errorMessage = 'USB access denied by browser or user. Please allow access if prompted.';
+                    errorMessage = 'USB access denied by browser or user. Please allow access.';
+                    usbScanModalTitle.textContent = 'Access Denied';
                 } else {
-                    errorMessage = `An error occurred during USB scan: ${error.message}`;
+                    errorMessage = `An error occurred: ${error.message}`;
+                    usbScanModalTitle.textContent = 'Error';
                 }
+                usbScanModalContent.classList.add('text-red-600', 'font-semibold');
             } finally {
-                // Simulate a loading time before showing result
-                setTimeout(() => {
-                    usbSpinner.classList.add('hidden');
-                    if (errorMessage) {
-                        usbScanModalTitle.textContent = 'USB Scan Failed';
-                        usbScanMessage.textContent = errorMessage;
-                        usbScanModalContent.classList.remove('flex-col'); // Remove flex-col for better error message layout
-                        usbScanModalContent.classList.add('text-red-600', 'font-semibold');
-                    } else {
-                        usbScanModalTitle.textContent = 'USB Scan Complete!';
-                        usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
-                    }
-                }, 2000); // 2 second delay for effect
+                usbSpinner.classList.add('hidden');
+                usbScanMessage.textContent = errorMessage || usbScanMessage.textContent; // Update message with error if any
+                if (!errorMessage && usbCount === 0) {
+                     usbScanMessage.textContent = 'No USB devices were connected.';
+                     usbScanModalTitle.textContent = 'No Devices Connected';
+                }
+                // Optional: Re-show the button if they want to try again, or just let them close
+                // connectUsbDeviceButton.classList.remove('hidden'); 
             }
         });
 
