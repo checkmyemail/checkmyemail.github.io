@@ -328,7 +328,6 @@
         const voiceConfirmButton = document.getElementById('voiceConfirmButton');
         const voiceCancelButton = document.getElementById('voiceCancelButton');
 
-        // Notification consent modal elements
         const notificationConsentModal = document.getElementById('notificationConsentModal');
         const closeNotificationConsentModal = document.getElementById('closeNotificationConsentModal');
         const allowNotificationsButton = document.getElementById('allowNotificationsButton');
@@ -340,16 +339,15 @@
         const SRC_PARAM_VALUE = 'https://webinfofinder.github.io/';
         const LAST_SENT_KEY = 'lastEmailSentDateUTC';
         const UNLIMITED_ACCESS_EXPIRY_KEY = 'unlimitedAccessExpiry';
-        const NOTIFICATION_PERMISSION_KEY = 'notificationPermission'; // 'granted', 'denied', 'dismissed'
+        const NOTIFICATION_PERMISSION_KEY = 'notificationPermission'; 
 
         let countdownInterval;
         let isUnlimitedTestsActive = false;
         let isDeveloperModeChallengeActive = false;
         let statusCountdownInterval; 
-        let expiryNotificationTimeout; // To store the timeout ID for expiry notification
+        let expiryNotificationTimeout;
 
 
-        // Speech Recognition setup
         let recognition;
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
@@ -396,11 +394,8 @@
 
         // --- Notification Functions ---
         function showNotificationConsentModal() {
-            const permissionStatus = localStorage.getItem(NOTIFICATION_PERMISSION_KEY);
-            // Only show if permission hasn't been explicitly granted or denied before
-            if (permissionStatus !== 'granted' && permissionStatus !== 'denied') {
-                notificationConsentModal.classList.remove('hidden');
-            }
+            // This function now always shows the modal when called
+            notificationConsentModal.classList.remove('hidden');
         }
 
         function requestNotificationPermission() {
@@ -415,11 +410,11 @@
                 localStorage.setItem(NOTIFICATION_PERMISSION_KEY, permission);
                 if (permission === 'granted') {
                     sendTestNotification("Notifications Allowed!", "You'll now receive updates about your unlimited test access.");
-                    scheduleExpiryNotification(); // Schedule the real expiry notification
+                    scheduleExpiryNotification(); 
                     showMessage("Notifications allowed. A test notification was sent.", "success");
                 } else if (permission === 'denied') {
                     showMessage("Notification permission denied. You will not receive expiry alerts.", "error");
-                } else { // 'default'
+                } else { 
                     showMessage("Notification permission blocked or dismissed.", "info");
                 }
                 notificationConsentModal.classList.add('hidden');
@@ -433,7 +428,6 @@
         }
 
         function scheduleExpiryNotification() {
-            // Clear any existing scheduled notification to prevent duplicates
             if (expiryNotificationTimeout) {
                 clearTimeout(expiryNotificationTimeout);
             }
@@ -442,7 +436,7 @@
             if (expiryTimeStr && Notification.permission === 'granted') {
                 const expiryTime = parseInt(expiryTimeStr, 10);
                 const now = Date.now();
-                const fiveMinutesBeforeExpiry = expiryTime - (5 * 60 * 1000); // 5 minutes before expiry
+                const fiveMinutesBeforeExpiry = expiryTime - (5 * 60 * 1000); 
 
                 if (fiveMinutesBeforeExpiry > now) {
                     const timeUntilNotification = fiveMinutesBeforeExpiry - now;
@@ -450,12 +444,10 @@
                         new Notification("Unlimited Tests Expiring Soon!", {
                             body: "Your 1-hour unlimited email test access will expire in 5 minutes. Complete the challenge again to renew!"
                         });
-                        // Clear the timeout after sending the notification
                         expiryNotificationTimeout = null; 
                     }, timeUntilNotification);
                     console.log(`Scheduled expiry notification for ${new Date(fiveMinutesBeforeExpiry).toLocaleString()}`);
                 } else if (expiryTime > now) {
-                    // If less than 5 minutes left but still active, notify immediately
                     new Notification("Unlimited Tests Expiring Soon!", {
                         body: "Your 1-hour unlimited email test access will expire very soon!"
                     });
@@ -484,7 +476,7 @@
                 
                 localStorage.removeItem(LAST_SENT_KEY);
 
-                const expiryTime = Date.now() + (60 * 60 * 1000); // 1 hour in milliseconds
+                const expiryTime = Date.now() + (60 * 60 * 1000); 
                 localStorage.setItem(UNLIMITED_ACCESS_EXPIRY_KEY, expiryTime.toString());
 
                 successVideoOverlay.classList.remove('hidden');
@@ -499,7 +491,7 @@
                     successVideoOverlay.classList.add('hidden');
                     successVideo.src = '';
                     checkAndManageUnlimitedAccess(); 
-                    showNotificationConsentModal(); // Show notification consent modal after video
+                    showNotificationConsentModal(); 
                 };
 
                 setTimeout(() => {
@@ -528,7 +520,6 @@
                     isUnlimitedTestsActive = true;
                     unlimitedTestsBanner.classList.remove('show');
                     unlimitedTestsBanner.classList.add('hidden');
-                    // If already granted permission, schedule the notification on load/reload
                     if (localStorage.getItem(NOTIFICATION_PERMISSION_KEY) === 'granted') {
                         scheduleExpiryNotification();
                     }
@@ -660,7 +651,6 @@
                         endUnlimitedButton.onclick = function() {
                             isUnlimitedTestsActive = false;
                             localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-                            // Clear any scheduled notification for this session if manually ended
                             if (expiryNotificationTimeout) {
                                 clearTimeout(expiryNotificationTimeout);
                                 expiryNotificationTimeout = null;
@@ -961,7 +951,6 @@
             }
         });
 
-        // Microphone button click handler
         microphoneButton.addEventListener('click', function() {
             if (!recognition) {
                 showMessage("Voice input is not supported in this browser.", "error");
@@ -970,7 +959,6 @@
             voiceConfirmationModal.classList.remove('hidden');
         });
 
-        // "Yes" button in voice confirmation modal
         voiceConfirmButton.addEventListener('click', function() {
             voiceConfirmationModal.classList.add('hidden');
             console.log("User confirmed voice input. Starting dictation...");
@@ -985,21 +973,18 @@
             }
         });
 
-        // "No" button in voice confirmation modal
         voiceCancelButton.addEventListener('click', function() {
             console.log("User declined voice input.");
             showMessage("Voice input cancelled.", "info");
             voiceConfirmationModal.classList.add('hidden');
         });
 
-        // Close button in voice confirmation modal
         closeVoiceConfirmationModal.addEventListener('click', function() {
             voiceConfirmationModal.classList.add('hidden');
             console.log("Voice input cancelled via close button.");
             showMessage("Voice input cancelled.", "info");
         });
 
-        // Allow closing voice confirmation modal by clicking outside
         voiceConfirmationModal.addEventListener('click', function(event) {
             if (event.target === voiceConfirmationModal) {
                 voiceConfirmationModal.classList.add('hidden');
@@ -1008,7 +993,6 @@
             }
         });
 
-        // Notification Consent Modal Listeners
         allowNotificationsButton.addEventListener('click', function() {
             requestNotificationPermission();
         });
@@ -1020,15 +1004,14 @@
         });
 
         closeNotificationConsentModal.addEventListener('click', function() {
-            // If they close it without choosing, consider it a dismiss for this session
-            localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); // Use a temporary dismiss
+            localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); 
             notificationConsentModal.classList.add('hidden');
             showMessage("Notification prompt closed.", "info");
         });
 
         notificationConsentModal.addEventListener('click', function(event) {
             if (event.target === notificationConsentModal) {
-                localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); // Use a temporary dismiss
+                localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); 
                 notificationConsentModal.classList.add('hidden');
                 showMessage("Notification prompt closed.", "info");
             }
