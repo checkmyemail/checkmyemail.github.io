@@ -197,8 +197,6 @@
         const messageErrorInfoButton = document.getElementById('messageErrorInfoButton');
 
         const viewInfoButton = document.getElementById('viewInfoButton');
-        // Removed references to howItWorksModal, closeHowItWorksModal, howItWorksContent, webhookInfoContent, viewWebhookInfoLink, backToHowItWorksButton
-        // as they are no longer needed for the "How this service works" functionality.
 
         const businessEmailBanner = document.getElementById('businessEmailBanner');
         const getBusinessEmailButton = document.getElementById('getBusinessEmailButton');
@@ -212,133 +210,244 @@
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
 
-        // The webhookUrlDisplay is now only referenced in the hidden "How this service works" modal,
-        // but its text content will remain set here.
+        // Set the default webhook URL for display in the "How this service works" modal
         document.getElementById('webhookUrlDisplay').textContent = DEFAULT_WEBHOOK_URL;
 
-
+        // Log general information about the site when the DOM content is fully loaded
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('--- Site Information ---');
+            console.log('Document loaded successfully.');
+            console.log(''); // Line break
+            console.log('Current URL:', window.location.href);
+            console.log(''); // Line break
+            console.log('Document Title:', document.title);
+            console.log(''); // Line break
+            console.log('Referrer URL (if any):', document.referrer || 'N/A');
+            console.log(''); // Line break
+            console.log('User Agent:', navigator.userAgent);
+            console.log(''); // Line break
+            console.log('Screen Resolution:', screen.width + 'x' + screen.height);
+            console.log(''); // Line break
+            console.log('Color Depth:', screen.colorDepth + ' bits per pixel');
+            console.log(''); // Line break
+            console.log('Browser Language:', navigator.language);
+            console.log(''); // Line break
+            console.log('Online Status:', navigator.onLine ? 'Online' : 'Offline');
+            console.log(''); // Line break
+            console.log('Number of CPU Cores (approx):', navigator.hardwareConcurrency || 'N/A');
+            console.log(''); // Line break
+            console.log('Current Date and Time (Local):', new Date().toLocaleString());
+            console.log(''); // Line break
+            console.log('Current Date and Time (UTC):', new Date().toUTCString());
+            console.log(''); // Line break
+            
             const urlParams = new URLSearchParams(window.location.search);
-
-            // Keep this part to hide the banner if 'hidebanner=true' is present
             if (urlParams.get('hidebanner') === 'true') {
                 businessEmailBanner.classList.add('hidden');
+                console.log('Status: Business email banner is hidden due to "hidebanner=true" URL parameter.');
+                console.log(''); // Line break
+            } else {
+                console.log('Status: Business email banner is visible (no "hidebanner=true" parameter found).');
+                console.log(''); // Line break
             }
+
+            // Always log Developer Mode as ENABLED
+            console.log('Developer Mode Status: ENABLED.');
+            console.log(''); // Line break
+
+            console.log('--- End Site Information ---');
+            console.log(''); // Line break
         });
 
+        // Function to display messages on the page
         function showMessage(message, type = 'info') {
             messageText.innerHTML = message;
+            // Remove all specific styling classes before adding the correct one
             messageBox.classList.remove('hidden', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-red-100', 'border-red-200', 'text-red-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
 
             if (type === 'success') {
                 messageBox.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
             } else if (type === 'error') {
                 messageBox.classList.add('bg-red-100', 'border-red-200', 'text-red-800');
-            } else {
+                // Append instruction to check console for errors
+                messageText.innerHTML += '<br>Check console for more info.';
+            } else { // 'info' type
                 messageBox.classList.add('bg-blue-100', 'border-blue-200', 'text-blue-800');
             }
             messageBox.classList.remove('hidden');
+            // Ensure the question mark button is always hidden for these messages
             messageErrorInfoButton.classList.add('hidden');
         }
 
+        // Function to hide the message box
         function hideMessage() {
             messageBox.classList.add('hidden');
             messageErrorInfoButton.classList.add('hidden');
         }
 
+        // Function to set the state of the send button (loading/enabled)
         function setButtonState(isLoading) {
             sendButton.disabled = isLoading;
             buttonText.textContent = isLoading ? 'Sending...' : 'Send Test Email';
         }
 
+        // Event listener for the main form submission
         webhookForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            hideMessage();
-            specifyWebhookModal.classList.remove('hidden');
-            customWebhookUrlInput.value = ''; // Do not pre-fill the URL
-            customWebhookUrlInput.focus();
+            event.preventDefault(); // Prevent default form submission
+            hideMessage(); // Hide any previous messages
+            specifyWebhookModal.classList.remove('hidden'); // Show the webhook specification modal
+            customWebhookUrlInput.value = ''; // Ensure the URL input is not pre-filled
+            customWebhookUrlInput.focus(); // Focus on the input field
+
+            // Log form submission and initial email input
+            console.log('--- Form Submission Details ---');
+            console.log('Action: Form submitted. Opening webhook specification modal.');
+            console.log(''); // Line break
+            console.log('Current Email Input (from form):', emailInput.value);
+            console.log('--- End Form Submission Details ---');
+            console.log(''); // Line break
         });
 
+        // Event listener for the "Call Webhook" button inside the modal
         callCustomWebhookButton.addEventListener('click', async function() {
             const recipientEmail = emailInput.value;
             const customWebhookUrl = customWebhookUrlInput.value;
 
+            console.log('--- Webhook Call Attempt ---');
+            console.log('Action: Attempting to call custom webhook.');
+            console.log(''); // Line break
+            console.log('Parameter: Recipient Email ->', recipientEmail);
+            console.log(''); // Line break
+            console.log('Parameter: Webhook URL ->', customWebhookUrl);
+            console.log(''); // Line break
+            
+            // Basic validation for email and webhook URL
             if (!recipientEmail) {
-                showMessage('Please enter an email address before calling the webhook.', 'error');
-                specifyWebhookModal.classList.add('hidden');
+                const msg = 'Please enter an email address before calling the webhook.';
+                showMessage(msg, 'error');
+                specifyWebhookModal.classList.add('hidden'); // Hide modal if validation fails
+                console.error('Validation Error: Email address is missing.', { email: recipientEmail });
+                console.log('--- End Webhook Call Attempt ---'); // End section on validation error
+                console.log(''); // Line break
                 return;
             }
             if (!customWebhookUrl) {
-                showMessage('Please specify a webhook URL.', 'error');
+                const msg = 'Please specify a webhook URL.';
+                showMessage(msg, 'error');
+                console.error('Validation Error: Webhook URL is missing.', { webhookUrl: customWebhookUrl });
+                console.log('--- End Webhook Call Attempt ---'); // End section on validation error
+                console.log(''); // Line break
                 return;
             }
             
-            specifyWebhookModal.classList.add('hidden');
-            setButtonState(true);
+            specifyWebhookModal.classList.add('hidden'); // Hide the modal
+            setButtonState(true); // Set button to loading state
 
             try {
+                const payload = { email: recipientEmail };
+                console.log('Payload sent to webhook:', JSON.stringify(payload, null, 2)); // Log the full payload
+                console.log(''); // Line break
+
                 const response = await fetch(customWebhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        email: recipientEmail
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
                     showMessage(`Test email data successfully sent to webhook: <span class="font-bold">${customWebhookUrl}</span> with email: <span class="font-bold">${recipientEmail}</span>.`, 'success');
+                    console.log('Webhook Call Success Details:', {
+                        url: customWebhookUrl,
+                        status: response.status,
+                        statusText: response.statusText,
+                        emailSentTo: recipientEmail
+                    });
+                    console.log(''); // Line break
                 } else {
                     const errorText = await response.text();
-                    showMessage(`Failed to send data to webhook. Status: ${response.status}. ${errorText ? `Details: ${errorText}` : 'Please check the webhook URL and its configuration.'}`, 'error');
+                    const errorMessage = `Failed to send data to webhook. Status: ${response.status}. ${errorText ? `Details: ${errorText}` : 'Please check the webhook URL and its configuration.'}`;
+                    showMessage(errorMessage, 'error');
+                    console.error('Webhook Call Failure Details:', {
+                        url: customWebhookUrl,
+                        status: response.status,
+                        statusText: response.statusText,
+                        responseText: errorText,
+                        emailAttempted: recipientEmail
+                    });
+                    console.error(''); // Line break for error
                 }
             } catch (error) {
-                showMessage(`An error occurred while calling the webhook: ${error.message}. Please check the URL and your network connection.`, 'error');
+                const errorMessage = `An error occurred while calling the webhook: ${error.message}. Please check the URL and your network connection.`;
+                showMessage(errorMessage, 'error');
+                console.error('Network or Unexpected Error Details during Webhook Call:', {
+                    message: error.message,
+                    errorObject: error,
+                    webhookUrl: customWebhookUrl,
+                    emailAttempted: recipientEmail
+                });
+                console.error(''); // Line break for error
             } finally {
-                setButtonState(false);
+                setButtonState(false); // Reset button state
+                console.log('Webhook call process finished.');
+                console.log('--- End Webhook Call Attempt ---');
+                console.log(''); // Line break
             }
         });
 
+        // Event listener for cancelling the custom webhook call from the modal
         cancelCustomWebhookCallButton.addEventListener('click', function() {
-            specifyWebhookModal.classList.add('hidden');
-            setButtonState(false);
-            hideMessage();
+            specifyWebhookModal.classList.add('hidden'); // Hide the modal
+            setButtonState(false); // Reset button state
+            hideMessage(); // Clear messages
+            console.log('Action: Webhook specification cancelled by user.');
+            console.log(''); // Line break
         });
 
+        // Event listener for closing the custom webhook modal via its close button
         closeSpecifyWebhookModal.addEventListener('click', function() {
-            specifyWebhookModal.classList.add('hidden');
-            setButtonState(false);
-            hideMessage();
+            specifyWebhookModal.classList.add('hidden'); // Hide the modal
+            setButtonState(false); // Reset button state
+            hideMessage(); // Clear messages
+            console.log('Action: Webhook specification modal closed via close button.');
+            console.log(''); // Line break
         });
 
+        // Event listener for closing the custom webhook modal by clicking outside
         specifyWebhookModal.addEventListener('click', function(event) {
             if (event.target === specifyWebhookModal) {
-                specifyWebhookModal.classList.add('hidden');
-                setButtonState(false);
-                hideMessage();
+                specifyWebhookModal.classList.add('hidden'); // Hide the modal
+                setButtonState(false); // Reset button state
+                hideMessage(); // Clear messages
+                console.log('Action: Webhook specification modal closed by clicking outside.');
+                console.log(''); // Line break
             }
         });
 
-        // Modified event listener for the "Disable Developer Mode" button
+        // Event listener for the "Disable Developer Mode" button
         viewInfoButton.addEventListener('click', function() {
+            console.log('Action: Redirecting to index.html to disable developer mode.');
             window.location.href = 'index.html'; // Redirect to index.html
+            console.log(''); // Line break
         });
 
-        // Removed the event listeners for closeHowItWorksModal, howItWorksModal (for clicks outside),
-        // viewWebhookInfoLink, and backToHowItWorksButton as their functionality is no longer needed.
-
-
+        // Event listener for dismissing the business email banner
         dismissBannerButton.addEventListener('click', function() {
             businessEmailBanner.classList.remove('opacity-100');
             businessEmailBanner.classList.add('opacity-0');
             setTimeout(() => {
                 businessEmailBanner.classList.add('hidden');
             }, 500);
+            console.log('Action: Business email banner dismissed.');
+            console.log(''); // Line break
         });
 
+        // Event listener for the "Learn More" button on the business email banner
         getBusinessEmailButton.addEventListener('click', function() {
+            console.log('Action: Redirecting to webinfofinder.github.io for more information.');
             window.location.href = 'https://webinfofinder.github.io/';
+            console.log(''); // Line break
         });
     </script>
 </body>
