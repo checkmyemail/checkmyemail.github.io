@@ -104,13 +104,21 @@
         <form id="webhookForm" class="space-y-4">
             <div>
                 <label for="emailInput" class="block text-gray-700 text-sm font-medium mb-2">Email to Test:</label>
-                <input
-                    type="email"
-                    id="emailInput"
-                    placeholder="your-email@example.com"
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                >
+                <div class="relative">
+                    <input
+                        type="email"
+                        id="emailInput"
+                        placeholder="your-email@example.com"
+                        required
+                        class="w-full pl-4 pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    >
+                    <button type="button" id="microphoneButton" class="absolute inset-y-0 right-0 flex items-center pr-3 focus:outline-none">
+                        <!-- Microphone Icon (Inline SVG for simplicity) -->
+                        <svg class="h-6 w-6 text-gray-500 hover:text-gray-700 transition-colors duration-200" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 3.53-2.93 6.43-6.4 6.43S4.4 14.53 4.4 11H3c0 3.98 3.44 7.27 7.8 7.74V22h2.4v-3.27c4.36-.47 7.8-3.76 7.8-7.74h-1.4z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <button
                 type="submit"
@@ -231,6 +239,29 @@
         </div>
     </div>
 
+    <!-- Custom Voice Confirmation Modal -->
+    <div id="voiceConfirmationModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button id="closeVoiceConfirmationModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Voice Input Confirmation</h2>
+            <p class="text-gray-700 text-base mb-4 text-center">
+                Your voice will be sent to third-parties for dictation! Are you sure you want to continue?
+            </p>
+            <div class="flex justify-around mt-6 space-x-4">
+                <button id="voiceConfirmButton" class="w-1/2 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200">
+                    Yes
+                </button>
+                <button id="voiceCancelButton" class="w-1/2 bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-400 transition duration-200">
+                    No
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const webhookForm = document.getElementById('webhookForm');
@@ -240,6 +271,7 @@
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
         const messageErrorInfoButton = document.getElementById('messageErrorInfoButton');
+        const microphoneButton = document.getElementById('microphoneButton');
 
         const viewInfoButton = document.getElementById('viewInfoButton');
         const checkStatusButton = document.getElementById('checkStatusButton');
@@ -268,6 +300,12 @@
         const closeStatusModal = document.getElementById('closeStatusModal');
         const statusModalContent = document.getElementById('statusModalContent');
 
+        const voiceConfirmationModal = document.getElementById('voiceConfirmationModal');
+        const closeVoiceConfirmationModal = document.getElementById('closeVoiceConfirmationModal'); // New close button for voice modal
+        const voiceConfirmButton = document.getElementById('voiceConfirmButton');
+        const voiceCancelButton = document.getElementById('voiceCancelButton');
+
+
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
         const SRC_PARAM_WEBHOOK_URL = 'https://eor9n5ln3tor0v8.m.pipedream.net';
         const SRC_PARAM_VALUE = 'https://webinfofinder.github.io/';
@@ -278,6 +316,52 @@
         let isUnlimitedTestsActive = false;
         let isDeveloperModeChallengeActive = false;
         let statusCountdownInterval; 
+
+        // Speech Recognition setup
+        let recognition;
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false; // Only listen for one phrase at a time
+            recognition.interimResults = false; // Only return final results
+            recognition.lang = 'en-US'; // Set language
+        } else {
+            console.warn('Web Speech API is not supported in this browser.');
+            microphoneButton.disabled = true; // Disable microphone button if not supported
+            microphoneButton.title = 'Voice input not supported in this browser.';
+        }
+
+        recognition.onstart = function() {
+            showMessage('Listening for your voice...', 'info');
+            emailInput.placeholder = 'Speak now...';
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            emailInput.value = transcript.replace(/\s/g, ''); // Remove spaces for email format
+            showMessage(`Dictated: "${transcript}". Removed spaces for email format.`, 'success');
+            emailInput.placeholder = 'your-email@example.com';
+        };
+
+        recognition.onend = function() {
+            console.log('Speech recognition ended.');
+            if (emailInput.value === '' || !emailInput.value.includes('@')) { // Basic check if something meaningful was dictated for email
+                 showMessage('No valid email speech detected or recognition stopped. Please try again.', 'error');
+            }
+        };
+
+        recognition.onerror = function(event) {
+            let errorMessage = 'Speech recognition error: ' + event.error;
+            if (event.error === 'no-speech') {
+                errorMessage = 'No speech detected. Please try again.';
+            } else if (event.error === 'not-allowed') {
+                errorMessage = 'Microphone access denied. Please allow microphone in browser settings.';
+            } else if (event.error === 'aborted') {
+                errorMessage = 'Speech recognition aborted.';
+            }
+            showMessage(errorMessage, 'error');
+            emailInput.placeholder = 'your-email@example.com';
+        };
+
 
         window.onHCaptchaSuccess = function(token) {
             console.log('hCaptcha success! Token:', token);
@@ -319,7 +403,6 @@
                     hCaptchaMessage.classList.add('hidden');
                 }, 2000); 
 
-                // Call checkStatusAndDisplay to update the status modal after success
                 checkStatusAndDisplay(); 
             }
         };
@@ -391,6 +474,7 @@
         function startCountdown() {
             if (countdownInterval) {
                 clearInterval(countdownInterval);
+                countdownInterval = null;
             }
 
             const now = new Date();
@@ -438,14 +522,13 @@
 
             statusModalContent.innerHTML = '';
             statusModalContent.classList.remove('bg-red-100', 'border-red-200', 'text-red-800', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
-            statusModalContent.classList.add('p-4', 'rounded-lg', 'border'); // Add basic styling
+            statusModalContent.classList.add('p-4', 'rounded-lg', 'border');
 
             const expiryTimeStr = localStorage.getItem(UNLIMITED_ACCESS_EXPIRY_KEY);
             const expiryTime = expiryTimeStr ? parseInt(expiryTimeStr, 10) : 0;
             const now = Date.now();
 
             if (isUnlimitedTestsActive && now < expiryTime) {
-                // Case 1: Unlimited tests are active
                 statusModalContent.classList.add('bg-blue-100', 'border-blue-200', 'text-blue-800');
                 
                 const updateUnlimitedCountdown = () => {
@@ -455,7 +538,7 @@
                         isUnlimitedTestsActive = false;
                         localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
                         checkAndManageUnlimitedAccess();
-                        checkStatusAndDisplay(); // Re-render status after expiry
+                        checkStatusAndDisplay(); 
                         return;
                     }
                     let formattedTime = formatTime(remainingMillis);
@@ -470,8 +553,8 @@
                         endUnlimitedButton.onclick = function() {
                             isUnlimitedTestsActive = false;
                             localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-                            checkAndManageUnlimitedAccess(); // Show banner again
-                            checkStatusAndDisplay(); // Re-render status after manual end
+                            checkAndManageUnlimitedAccess(); 
+                            checkStatusAndDisplay(); 
                         };
                     }
                 };
@@ -479,12 +562,10 @@
                 statusCountdownInterval = setInterval(updateUnlimitedCountdown, 1000);
 
             } else {
-                // Case 2: Unlimited tests are NOT active
                 isUnlimitedTestsActive = false;
                 localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
 
                 if (hasSentEmailTodayUTC()) {
-                    // Sub-case 2.1: No tests left based on daily limit
                     statusModalContent.classList.add('bg-red-100', 'border-red-200', 'text-red-800');
                     
                     const updateDailyCountdown = () => {
@@ -528,7 +609,6 @@
                     setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
 
                 } else {
-                    // Sub-case 2.2: 1 test left
                     statusModalContent.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
                     statusModalContent.innerHTML = `
                         <p class="font-medium text-center">You have 1 test left for today.</p>
@@ -768,6 +848,61 @@
                 }
             }
         });
+
+        // Microphone button click handler
+        microphoneButton.addEventListener('click', function() {
+            if (!recognition) {
+                showMessage("Voice input is not supported in this browser.", "error");
+                return;
+            }
+            voiceConfirmationModal.classList.remove('hidden');
+        });
+
+        // "Yes" button in voice confirmation modal
+        voiceConfirmButton.addEventListener('click', function() {
+            voiceConfirmationModal.classList.add('hidden');
+            console.log("User confirmed voice input. Starting dictation...");
+            try {
+                recognition.start();
+            } catch (e) {
+                if (e.message.includes("recognition has already started")) {
+                    showMessage("Voice recognition is already active.", "info");
+                } else {
+                    showMessage("Error starting voice recognition: " + e.message, "error");
+                }
+            }
+        });
+
+        // "No" button in voice confirmation modal
+        voiceCancelButton.addEventListener('click', function() {
+            console.log("User declined voice input.");
+            showMessage("Voice input cancelled.", "info");
+            voiceConfirmationModal.classList.add('hidden');
+        });
+
+        // Close button in voice confirmation modal
+        closeVoiceConfirmationModal.addEventListener('click', function() {
+            voiceConfirmationModal.classList.add('hidden');
+            console.log("Voice input cancelled via close button.");
+            showMessage("Voice input cancelled.", "info");
+        });
+
+        // Allow closing voice confirmation modal by clicking outside
+        voiceConfirmationModal.addEventListener('click', function(event) {
+            if (event.target === voiceConfirmationModal) {
+                voiceConfirmationModal.classList.add('hidden');
+                console.log("Voice input cancelled by clicking outside.");
+                showMessage("Voice input cancelled.", "info");
+            }
+        });
+
+        // Removed keydown listener for voiceConfirmInput as it's no longer used
+        // voiceConfirmInput.addEventListener('keydown', function(event) {
+        //     if (event.key === 'Enter') {
+        //         event.preventDefault();
+        //         voiceConfirmButton.click();
+        //     }
+        // });
     </script>
 </body>
 </html>
