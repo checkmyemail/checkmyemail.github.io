@@ -247,7 +247,9 @@
         const SRC_PARAM_WEBHOOK_URL = 'https://eor9n5ln3tor0v8.m.pipedream.net';
         const SRC_PARAM_VALUE = 'https://webinfofinder.github.io/';
         const LAST_SENT_KEY = 'lastEmailSentDateUTC';
-        const UNLIMITED_BANNER_DISMISSED_KEY = 'unlimitedBannerDismissed'; // Still used for *manual* dismissal persistence
+        // The UNLIMITED_BANNER_DISMISSED_KEY is no longer needed to manage banner visibility
+        // as it will always show on new visits.
+        // const UNLIMITED_BANNER_DISMISSED_KEY = 'unlimitedBannerDismissed'; 
 
         let countdownInterval;
         let isUnlimitedTestsActive = false; // Session-based flag
@@ -265,7 +267,7 @@
 
             unlimitedTestsBanner.classList.remove('show');
             unlimitedTestsBanner.classList.add('hidden');
-            // REMOVED: localStorage.setItem(UNLIMITED_BANNER_DISMISSED_KEY, 'true'); // This line was removed
+            // Removed: localStorage.setItem(UNLIMITED_BANNER_DISMISSED_KEY, 'true'); // No longer persists dismissal
             
             localStorage.removeItem(LAST_SENT_KEY); // Clear any existing daily limit date
 
@@ -347,9 +349,8 @@
                     if (modalCountdownContainer) {
                         modalCountdownContainer.classList.add('hidden');
                     }
-                    // Show banner again if the daily limit is now off and user is not session-verified
-                    // The banner will only reappear if not manually dismissed in the current session.
-                    if (!isUnlimitedTestsActive && localStorage.getItem(UNLIMITED_BANNER_DISMISSED_KEY) !== 'true') {
+                    // Always show the banner again if daily limit is now off and user is not session-verified
+                    if (!isUnlimitedTestsActive) {
                         unlimitedTestsBanner.classList.remove('hidden');
                         setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
                     }
@@ -370,12 +371,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // isUnlimitedTestsActive is false by default on every new load.
-            // Always show the banner on a new visit unless it was manually dismissed in the past.
-            if (localStorage.getItem(UNLIMITED_BANNER_DISMISSED_KEY) !== 'true') {
-                unlimitedTestsBanner.classList.remove('hidden');
-                setTimeout(() => unlimitedTestsBanner.classList.add('show'), 100);
-            }
+            // Always show the banner on a new visit/reload.
+            unlimitedTestsBanner.classList.remove('hidden');
+            setTimeout(() => unlimitedTestsBanner.classList.add('show'), 100);
 
             const urlParams = new URLSearchParams(window.location.search);
 
@@ -532,10 +530,11 @@
             }
         });
 
+        // This dismiss is now only for the current session.
         dismissUnlimitedTestsBanner.addEventListener('click', function() {
             unlimitedTestsBanner.classList.remove('show');
             unlimitedTestsBanner.classList.add('hidden');
-            localStorage.setItem(UNLIMITED_BANNER_DISMISSED_KEY, 'true'); // This dismissal IS persistent
+            // Removed localStorage.setItem(UNLIMITED_BANNER_DISMISSED_KEY, 'true');
         });
 
         getUnlimitedTestsButton.addEventListener('click', function() {
@@ -558,6 +557,3 @@
     </script>
 </body>
 </html>
-
-
-
