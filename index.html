@@ -323,9 +323,8 @@
         const welcomeMessageModal = document.getElementById('welcomeMessageModal'); 
         const welcomeModalDismissButton = document.getElementById('welcomeModalDismissButton');
         const welcomeMessageText = document.getElementById('welcomeMessageText');
-        const closeWelcomeMessageModal = document.getElementById('closeWelcomeMessageModal'); // Changed ID
+        const closeWelcomeMessageModal = document.getElementById('closeWelcomeMessageModal');
 
-        // New Alert Elements
         const alertMessageContainer = document.getElementById('alertMessageContainer');
         const alertMessageText = document.getElementById('alertMessageText');
         const closeAlertMessage = document.getElementById('closeAlertMessage');
@@ -508,8 +507,9 @@
             const showWelcome = urlParams.get('showwelcome');
             const hideConsentParam = urlParams.get('hideconsent');
             const hideBanner = urlParams.get('hidebanner');
-            const alertType = urlParams.get('alerttype'); // New parameter
-            const alertString = urlParams.get('alertstring'); // New parameter
+            const alertType = urlParams.get('alerttype');
+            const alertString = urlParams.get('alertstring');
+            const alertDismiss = urlParams.get('alertdismiss'); // New parameter
 
             // Log parameters to console
             console.log('URL Parameters:');
@@ -517,8 +517,10 @@
             console.log('  showwelcome:', showWelcome);
             console.log('  hideconsent:', hideConsentParam);
             console.log('  hidebanner:', hideBanner);
-            console.log('  alerttype:', alertType); // Log new parameter
-            console.log('  alertstring:', alertString); // Log new parameter
+            console.log('  alerttype:', alertType);
+            console.log('  alertstring:', alertString);
+            console.log('  alertdismiss:', alertDismiss); // Log new parameter
+            console.log('  Available alert types: info, warning, error'); 
 
             // Handle hideconsent parameter
             if (hideConsentParam === 'true') {
@@ -546,11 +548,11 @@
                 businessEmailBanner.classList.add('hidden');
             }
 
-            // Handle alert parameters (New Logic)
+            // Handle alert parameters
             if (alertType && alertString) {
                 alertMessageText.textContent = alertString;
                 alertMessageContainer.classList.remove('hidden');
-                alertMessageContainer.classList.remove('alert-info', 'alert-warning', 'alert-error'); // Clear previous classes
+                alertMessageContainer.classList.remove('alert-info', 'alert-warning', 'alert-error'); 
                 if (alertType === 'info') {
                     alertMessageContainer.classList.add('alert-info');
                 } else if (alertType === 'warning') {
@@ -558,9 +560,16 @@
                 } else if (alertType === 'error') {
                     alertMessageContainer.classList.add('alert-error');
                 } else {
-                    // Default to info if invalid type
-                    alertMessageContainer.classList.add('alert-info');
+                    alertMessageContainer.classList.add('alert-info'); // Default to info if invalid type
                 }
+
+                // Handle alertdismiss parameter
+                if (alertDismiss === 'false') {
+                    closeAlertMessage.classList.add('hidden');
+                } else {
+                    closeAlertMessage.classList.remove('hidden'); // Default to dismissible if true or not set
+                }
+
             }
         });
 
@@ -745,8 +754,7 @@
             }
         });
 
-        // Welcome Message Modal Listeners
-        closeWelcomeMessageModal.addEventListener('click', () => { // Changed ID
+        closeWelcomeMessageModal.addEventListener('click', () => {
             welcomeMessageModal.classList.add('hidden');
         });
 
@@ -760,7 +768,6 @@
             }
         });
 
-        // Close Alert Message
         closeAlertMessage.addEventListener('click', () => {
             alertMessageContainer.classList.add('hidden');
         });
