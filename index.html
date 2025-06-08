@@ -54,6 +54,49 @@
             opacity: 1;
             transform: scale(1.1);
         }
+        /* Alert styles */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        .alert-info {
+            background-color: #DBEAFE; /* blue-100 */
+            color: #1E40AF; /* blue-800 */
+            border: 1px solid #93C5FD; /* blue-300 */
+        }
+        .alert-warning {
+            background-color: #FFFBEB; /* yellow-100 */
+            color: #92400E; /* yellow-800 */
+            border: 1px solid #FCD34D; /* yellow-300 */
+        }
+        .alert-error {
+            background-color: #FEE2E2; /* red-100 */
+            color: #991B1B; /* red-800 */
+            border: 1px solid #FCA5A5; /* red-300 */
+        }
+        .alert .close-button {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .alert .close-button:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4 pb-20">
@@ -63,6 +106,14 @@
         <p class="text-gray-600 text-sm mb-6 text-center">
             Enter an email address below to verify that you are properly receiving emails.
         </p>
+
+        <!-- Alert Message Container (New) -->
+        <div id="alertMessageContainer" class="alert hidden">
+            <span id="alertMessageText"></span>
+            <button id="closeAlertMessage" class="close-button">
+                &times;
+            </button>
+        </div>
 
         <form id="webhookForm" class="space-y-4">
             <div>
@@ -217,7 +268,7 @@
     <!-- Welcome Message Modal -->
     <div id="welcomeMessageModal" class="modal-overlay hidden">
         <div class="modal-content text-center p-6 bg-white rounded-xl shadow-lg">
-            <button id="closeWelcomeMessage" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none">
+            <button id="closeWelcomeMessageModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -269,10 +320,15 @@
         const declineCookiesButton = document.getElementById('declineCookiesButton');
         const COOKIE_CONSENT_KEY = 'cookieConsentAccepted'; 
 
-        const welcomeMessageModal = document.getElementById('welcomeMessageModal'); // New welcome modal
+        const welcomeMessageModal = document.getElementById('welcomeMessageModal'); 
         const welcomeModalDismissButton = document.getElementById('welcomeModalDismissButton');
         const welcomeMessageText = document.getElementById('welcomeMessageText');
-        const closeWelcomeMessage = document.getElementById('closeWelcomeMessage');
+        const closeWelcomeMessageModal = document.getElementById('closeWelcomeMessageModal'); // Changed ID
+
+        // New Alert Elements
+        const alertMessageContainer = document.getElementById('alertMessageContainer');
+        const alertMessageText = document.getElementById('alertMessageText');
+        const closeAlertMessage = document.getElementById('closeAlertMessage');
 
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
@@ -452,6 +508,8 @@
             const showWelcome = urlParams.get('showwelcome');
             const hideConsentParam = urlParams.get('hideconsent');
             const hideBanner = urlParams.get('hidebanner');
+            const alertType = urlParams.get('alerttype'); // New parameter
+            const alertString = urlParams.get('alertstring'); // New parameter
 
             // Log parameters to console
             console.log('URL Parameters:');
@@ -459,6 +517,8 @@
             console.log('  showwelcome:', showWelcome);
             console.log('  hideconsent:', hideConsentParam);
             console.log('  hidebanner:', hideBanner);
+            console.log('  alerttype:', alertType); // Log new parameter
+            console.log('  alertstring:', alertString); // Log new parameter
 
             // Handle hideconsent parameter
             if (hideConsentParam === 'true') {
@@ -484,6 +544,23 @@
             // Existing hidebanner logic
             if (hideBanner === 'true') {
                 businessEmailBanner.classList.add('hidden');
+            }
+
+            // Handle alert parameters (New Logic)
+            if (alertType && alertString) {
+                alertMessageText.textContent = alertString;
+                alertMessageContainer.classList.remove('hidden');
+                alertMessageContainer.classList.remove('alert-info', 'alert-warning', 'alert-error'); // Clear previous classes
+                if (alertType === 'info') {
+                    alertMessageContainer.classList.add('alert-info');
+                } else if (alertType === 'warning') {
+                    alertMessageContainer.classList.add('alert-warning');
+                } else if (alertType === 'error') {
+                    alertMessageContainer.classList.add('alert-error');
+                } else {
+                    // Default to info if invalid type
+                    alertMessageContainer.classList.add('alert-info');
+                }
             }
         });
 
@@ -535,14 +612,6 @@
 
             hideMessage();
             setButtonState(true);
-
-            // hasSentEmailTodayUTC always returns false, so this block is effectively bypassed
-            // if (hasSentEmailTodayUTC()) {
-            //     showMessage('You can only send one test email per UTC day. Calculating next availability...', 'error');
-            //     startCountdown();
-            //     setButtonState(false);
-            //     return;
-            // }
 
             const recipientEmail = emailInput.value;
 
@@ -677,7 +746,7 @@
         });
 
         // Welcome Message Modal Listeners
-        closeWelcomeMessage.addEventListener('click', () => {
+        closeWelcomeMessageModal.addEventListener('click', () => { // Changed ID
             welcomeMessageModal.classList.add('hidden');
         });
 
@@ -689,6 +758,11 @@
             if (event.target === welcomeMessageModal) {
                 welcomeMessageModal.classList.add('hidden');
             }
+        });
+
+        // Close Alert Message
+        closeAlertMessage.addEventListener('click', () => {
+            alertMessageContainer.classList.add('hidden');
         });
 
         // Cookie Consent Modal Listeners
@@ -722,5 +796,3 @@
     </script>
 </body>
 </html>
-
-
