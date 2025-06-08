@@ -64,16 +64,6 @@
             Enter an email address below to verify that you are properly receiving emails.
         </p>
 
-        <!-- Welcome Message Container -->
-        <div id="welcomeMessageContainer" class="p-4 bg-blue-100 border border-blue-200 text-blue-800 rounded-lg mb-6 hidden relative">
-            <p id="welcomeMessageText" class="font-medium"></p>
-            <button id="closeWelcomeMessage" class="absolute top-2 right-2 text-blue-600 hover:text-blue-800 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-
         <form id="webhookForm" class="space-y-4">
             <div>
                 <label for="emailInput" class="block text-gray-700 text-sm font-medium mb-2">Email to Test:</label>
@@ -173,13 +163,6 @@
         </div>
     </div>
 
-    <!-- Video Overlay for Success Animation -->
-    <div id="successVideoOverlay" class="modal-overlay hidden z-[1100]">
-        <video id="successVideo" class="max-w-full max-h-full rounded-lg shadow-xl" autoplay muted playsinline>
-            Your browser does not support the video tag.
-        </video>
-    </div>
-
     <!-- Custom Voice Confirmation Modal -->
     <div id="voiceConfirmationModal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -231,6 +214,24 @@
         </div>
     </div>
 
+    <!-- Welcome Message Modal -->
+    <div id="welcomeMessageModal" class="modal-overlay hidden">
+        <div class="modal-content text-center p-6 bg-white rounded-xl shadow-lg">
+            <button id="closeWelcomeMessage" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome!</h2>
+            <p id="welcomeMessageText" class="text-gray-700 text-base mb-6">
+                You can test your email reception here.
+            </p>
+            <button id="welcomeModalDismissButton" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-md">
+                Got It!
+            </button>
+        </div>
+    </div>
+
 
     <script>
         const webhookForm = document.getElementById('webhookForm');
@@ -258,9 +259,6 @@
         const hcaptchaWidgetContainer = document.getElementById('hcaptchaWidgetContainer');
         const hCaptchaMessage = document.getElementById('hCaptchaMessage');
 
-        const successVideoOverlay = document.getElementById('successVideoOverlay');
-        const successVideo = document.getElementById('successVideo');
-
         const voiceConfirmationModal = document.getElementById('voiceConfirmationModal');
         const closeVoiceConfirmationModal = document.getElementById('closeVoiceConfirmationModal');
         const voiceConfirmButton = document.getElementById('voiceConfirmButton');
@@ -271,7 +269,8 @@
         const declineCookiesButton = document.getElementById('declineCookiesButton');
         const COOKIE_CONSENT_KEY = 'cookieConsentAccepted'; 
 
-        const welcomeMessageContainer = document.getElementById('welcomeMessageContainer');
+        const welcomeMessageModal = document.getElementById('welcomeMessageModal'); // New welcome modal
+        const welcomeModalDismissButton = document.getElementById('welcomeModalDismissButton');
         const welcomeMessageText = document.getElementById('welcomeMessageText');
         const closeWelcomeMessage = document.getElementById('closeWelcomeMessage');
 
@@ -337,25 +336,10 @@
                 hCaptchaModal.classList.add('hidden');
                 window.location.href = 'dev.html';
             } else {
-                hCaptchaMessage.textContent = 'Verification successful! You now have unlimited tests for 1 hour.';
+                hCaptchaMessage.textContent = 'Verification successful!'; 
                 hCaptchaMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800');
                 hCaptchaMessage.classList.add('bg-green-100', 'text-green-800');
                 
-                localStorage.removeItem(LAST_SENT_KEY);
-
-                successVideoOverlay.classList.remove('hidden');
-                successVideo.src = 'complete.webm';
-                successVideo.play().catch(error => {
-                    console.error("Video playback failed:", error);
-                    successVideoOverlay.classList.add('hidden');
-                    successVideo.src = '';
-                });
-
-                successVideo.onended = () => {
-                    successVideoOverlay.classList.add('hidden');
-                    successVideo.src = '';
-                };
-
                 setTimeout(() => {
                     hCaptchaMessage.classList.add('hidden');
                 }, 2000); 
@@ -373,27 +357,16 @@
         };
 
         function hasSentEmailTodayUTC() {
-            const lastSentDateString = localStorage.getItem(LAST_SENT_KEY);
-            if (!lastSentDateString) {
-                return false;
-            }
-            const lastSentDate = new Date(lastSentDateString);
-            const today = new Date();
-
-            return (
-                lastSentDate.getUTCFullYear() === today.getUTCFullYear() &&
-                lastSentDate.getUTCMonth() === today.getUTCMonth() &&
-                lastSentDate.getUTCDate() === today.getUTCDate()
-            );
+            return false; // Always return false for unlimited tests
         }
 
         function updateLastSentDateUTC() {
-            localStorage.setItem(LAST_SENT_KEY, new Date().toISOString());
+            // Function no longer performs any action
         }
 
         function formatTime(milliseconds) {
             const totalSeconds = Math.floor(milliseconds / 1000);
-            const hours = Math.floor((totalSeconds % 3600) / 60);
+            const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
 
@@ -503,10 +476,9 @@
                 emailInput.value = prefillEmail;
             }
 
-            // Handle showwelcome parameter
+            // Handle showwelcome parameter - now shows a modal
             if (showWelcome === 'true') {
-                welcomeMessageText.textContent = 'Welcome! You can test your email reception here.';
-                welcomeMessageContainer.classList.remove('hidden');
+                welcomeMessageModal.classList.remove('hidden');
             }
 
             // Existing hidebanner logic
@@ -564,12 +536,13 @@
             hideMessage();
             setButtonState(true);
 
-            if (hasSentEmailTodayUTC()) {
-                showMessage('You can only send one test email per UTC day. Calculating next availability...', 'error');
-                startCountdown();
-                setButtonState(false);
-                return;
-            }
+            // hasSentEmailTodayUTC always returns false, so this block is effectively bypassed
+            // if (hasSentEmailTodayUTC()) {
+            //     showMessage('You can only send one test email per UTC day. Calculating next availability...', 'error');
+            //     startCountdown();
+            //     setButtonState(false);
+            //     return;
+            // }
 
             const recipientEmail = emailInput.value;
 
@@ -585,7 +558,6 @@
                 });
 
                 if (response.ok) {
-                    updateLastSentDateUTC();
                     showMessage(`Test email successfully sent to: <span class="font-bold">${recipientEmail}</span>. Please check your inbox.`, 'success');
                 } else {
                     const errorText = await response.text();
@@ -704,8 +676,19 @@
             }
         });
 
+        // Welcome Message Modal Listeners
         closeWelcomeMessage.addEventListener('click', () => {
-            welcomeMessageContainer.classList.add('hidden');
+            welcomeMessageModal.classList.add('hidden');
+        });
+
+        welcomeModalDismissButton.addEventListener('click', () => {
+            welcomeMessageModal.classList.add('hidden');
+        });
+
+        welcomeMessageModal.addEventListener('click', (event) => {
+            if (event.target === welcomeMessageModal) {
+                welcomeMessageModal.classList.add('hidden');
+            }
         });
 
         // Cookie Consent Modal Listeners
@@ -739,4 +722,5 @@
     </script>
 </body>
 </html>
+
 
