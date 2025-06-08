@@ -344,7 +344,6 @@
             recognition.interimResults = false; 
             recognition.lang = 'en-US'; 
         } else {
-            // Moved console.warn outside the if/else for guaranteed display
             microphoneButton.disabled = true; 
             microphoneButton.title = 'Voice input not supported in this browser.';
         }
@@ -500,9 +499,6 @@
 
 
         document.addEventListener('DOMContentLoaded', () => {
-            // The console.warn message for security
-            console.warn('DO NOT PASTE OR TYPE ANYTHING HERE!! IT COULD ALLOW ATTACKERS TO ACCESS YOUR COMPUTER AND MAKE THIS SITE LOOK DIFFERENT');
-
             const urlParams = new URLSearchParams(window.location.search);
 
             // Get parameters
@@ -524,6 +520,8 @@
             console.log('  alertstring:', alertString);
             console.log('  Available alert types: info, warning, error'); 
             console.log('  alertdismiss:', alertDismiss); 
+            console.log(''); // Empty console.log as requested
+            console.warn('DO NOT PASTE OR TYPE ANYTHING HERE!! IT COULD ALLOW ATTACKERS TO ACCESS YOUR COMPUTER AND MAKE THIS SITE LOOK DIFFERENT'); // Moved here
 
             // Handle hideconsent parameter
             if (hideConsentParam === 'true') {
@@ -805,6 +803,4 @@
         });
     </script>
 </body>
-</html>
-
 </html>
