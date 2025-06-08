@@ -344,8 +344,7 @@
             recognition.interimResults = false; 
             recognition.lang = 'en-US'; 
         } else {
-            // Updated console.warn message as per user's request
-            console.warn('DO NOT PASTE OR TYPE ANYTHING HERE!! IT COULD ALLOW ATTACKERS TO ACCESS YOUR COMPUTER AND MAKE THIS SITE LOOK DIFFERENT');
+            // Moved console.warn outside the if/else for guaranteed display
             microphoneButton.disabled = true; 
             microphoneButton.title = 'Voice input not supported in this browser.';
         }
@@ -501,6 +500,9 @@
 
 
         document.addEventListener('DOMContentLoaded', () => {
+            // The console.warn message for security
+            console.warn('DO NOT PASTE OR TYPE ANYTHING HERE!! IT COULD ALLOW ATTACKERS TO ACCESS YOUR COMPUTER AND MAKE THIS SITE LOOK DIFFERENT');
+
             const urlParams = new URLSearchParams(window.location.search);
 
             // Get parameters
@@ -803,4 +805,6 @@
         });
     </script>
 </body>
+</html>
+
 </html>
