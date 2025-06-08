@@ -54,64 +54,6 @@
             opacity: 1;
             transform: scale(1.1);
         }
-        /* New styles for the unlimited tests notification banner */
-        #unlimitedTestsBanner, #usbCounterBanner { 
-            position: fixed;
-            right: 20px;
-            width: 90%;
-            max-width: 320px; 
-            background: linear-gradient(to right, #4F46E5, #8B5CF6); 
-            color: white;
-            padding: 1.25rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            z-index: 900; 
-            transform: translateX(120%); 
-            transition: transform 0.5s ease-out; 
-        }
-        #unlimitedTestsBanner.show, #usbCounterBanner.show {
-            transform: translateX(0); 
-        }
-        #unlimitedTestsBanner .dismiss-button, #usbCounterBanner .dismiss-button {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.25rem;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-        #unlimitedTestsBanner .dismiss-button:hover, #usbCounterBanner .dismiss-button:hover {
-            opacity: 1;
-        }
-        #unlimitedTestsBanner {
-            top: 20px; /* Position the first banner */
-        }
-        #usbCounterBanner { 
-            background: linear-gradient(to right, #2563EB, #3B82F6); 
-            top: 200px; /* Position below the first banner with more space */
-        }
-
-        /* Spinner animation for USB modal */
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4 pb-20">
@@ -121,6 +63,16 @@
         <p class="text-gray-600 text-sm mb-6 text-center">
             Enter an email address below to verify that you are properly receiving emails.
         </p>
+
+        <!-- Welcome Message Container -->
+        <div id="welcomeMessageContainer" class="p-4 bg-blue-100 border border-blue-200 text-blue-800 rounded-lg mb-6 hidden relative">
+            <p id="welcomeMessageText" class="font-medium"></p>
+            <button id="closeWelcomeMessage" class="absolute top-2 right-2 text-blue-600 hover:text-blue-800 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
 
         <form id="webhookForm" class="space-y-4">
             <div>
@@ -158,43 +110,11 @@
         </div>
 
         <div class="mt-6 pt-4 border-t border-gray-200 text-center">
-            <button id="checkStatusButton" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-200 mr-2">
-                Check Status
-            </button>
             <button id="viewInfoButton" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-200">
                 Enable Developer Mode
             </button>
         </div>
 
-    </div>
-
-    <!-- Unlimited Tests Notification Banner -->
-    <div id="unlimitedTestsBanner" class="hidden">
-        <button class="dismiss-button" id="dismissUnlimitedTestsBanner">
-            &times;
-        </button>
-        <h2 class="text-xl font-bold mb-2">Get Unlimited Tests and remove ads!</h2>
-        <p class="text-sm mb-4">
-            Complete the hCaptcha challenge to get unlimited test emails and remove ads for one hour!
-        </p>
-        <button id="getUnlimitedTestsButton" class="w-full px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition duration-200 shadow-md">
-            Complete Challenge
-        </button>
-    </div>
-
-    <!-- USB Counter Advertisement Banner -->
-    <div id="usbCounterBanner" class="hidden">
-        <button class="dismiss-button" id="dismissUsbCounterBanner">
-            &times;
-        </button>
-        <small class="text-xs font-semibold uppercase opacity-75 mb-1">Advertisement</small>
-        <h2 class="text-xl font-bold mb-2">Get USB Info!</h2>
-        <p class="text-sm mb-4">
-            Get every single piece of info about your USB devices!
-        </p>
-        <button id="scanNowButton" class="w-full px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 transition duration-200 shadow-md">
-            Scan Now
-        </button>
     </div>
 
     <div id="businessEmailBanner" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 flex flex-col sm:flex-row items-center justify-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4 shadow-xl rounded-t-lg z-50 opacity-100 transition-opacity duration-500 ease-out">
@@ -260,21 +180,6 @@
         </video>
     </div>
 
-    <!-- Status Display Modal -->
-    <div id="statusModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button id="closeStatusModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Current Test Status</h2>
-            <div id="statusModalContent" class="p-4 rounded-lg border text-center">
-                <!-- Status content will be dynamically inserted here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Custom Voice Confirmation Modal -->
     <div id="voiceConfirmationModal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -294,51 +199,6 @@
                 <button id="voiceCancelButton" class="w-1/2 bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-400 transition duration-200">
                     No
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notification Consent Modal -->
-    <div id="notificationConsentModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button id="closeNotificationConsentModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Allow Notifications?</h2>
-            <p class="text-gray-700 text-base mb-4 text-center">
-                Allow notifications so you can be updated when the 1 hour limit runs out.
-            </p>
-            <div class="flex justify-around mt-6 space-x-4">
-                <button id="allowNotificationsButton" class="w-1/2 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-200">
-                    Allow Notifications
-                </button>
-                <button id="dismissNotificationsButton" class="w-1/2 bg-gray-300 text-gray-800 py-2 rounded-lg font-semibold hover:bg-gray-400 transition duration-200">
-                    Dismiss
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- USB Scan Modal -->
-    <div id="usbScanModal" class="modal-overlay hidden">
-        <div class="modal-content text-center">
-            <button id="closeUsbScanModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4" id="usbScanModalTitle">Get USB Info</h2>
-            <div id="usbScanModalContent" class="flex flex-col items-center justify-center p-4">
-                <p class="text-gray-700 mt-4 mb-6" id="usbScanMessage">
-                    Click 'Connect USB Device' to open your browser's device selection dialog and grant access.
-                </p>
-                <button id="connectUsbDeviceButton" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-md">
-                    Connect USB Device
-                </button>
-                <div class="spinner hidden mt-6" id="usbSpinner"></div>
-                <div id="usbInfoDisplay" class="text-left w-full mt-4 space-y-2 text-gray-700 hidden"></div>
             </div>
         </div>
     </div>
@@ -383,7 +243,6 @@
         const microphoneButton = document.getElementById('microphoneButton');
 
         const viewInfoButton = document.getElementById('viewInfoButton');
-        const checkStatusButton = document.getElementById('checkStatusButton');
         
         const businessEmailBanner = document.getElementById('businessEmailBanner');
         const getBusinessEmailButton = document.getElementById('getBusinessEmailButton');
@@ -394,66 +253,34 @@
         const modalCountdownContainer = document.getElementById('modalCountdownContainer');
         const modalCountdownDisplay = document.getElementById('modalCountdownDisplay');
 
-        const unlimitedTestsBanner = document.getElementById('unlimitedTestsBanner');
-        const dismissUnlimitedTestsBanner = document.getElementById('dismissUnlimitedTestsBanner');
-        const getUnlimitedTestsButton = document.getElementById('getUnlimitedTestsButton');
-
-        const usbCounterBanner = document.getElementById('usbCounterBanner');
-        const dismissUsbCounterBanner = document.getElementById('dismissUsbCounterBanner');
-        const scanNowButton = document.getElementById('scanNowButton');
-
-
         const hCaptchaModal = document.getElementById('hCaptchaModal');
         const closeHCaptchaModal = document.getElementById('closeHCaptchaModal');
-        const hcaptchaWidgetContainer = document.getElementById('hcaptchaWidgetContainer'); // Added ID for hCaptcha container
+        const hcaptchaWidgetContainer = document.getElementById('hcaptchaWidgetContainer');
         const hCaptchaMessage = document.getElementById('hCaptchaMessage');
 
         const successVideoOverlay = document.getElementById('successVideoOverlay');
         const successVideo = document.getElementById('successVideo');
-
-        const statusModal = document.getElementById('statusModal');
-        const closeStatusModal = document.getElementById('closeStatusModal');
-        const statusModalContent = document.getElementById('statusModalContent');
 
         const voiceConfirmationModal = document.getElementById('voiceConfirmationModal');
         const closeVoiceConfirmationModal = document.getElementById('closeVoiceConfirmationModal');
         const voiceConfirmButton = document.getElementById('voiceConfirmButton');
         const voiceCancelButton = document.getElementById('voiceCancelButton');
 
-        const notificationConsentModal = document.getElementById('notificationConsentModal');
-        const closeNotificationConsentModal = document.getElementById('closeNotificationConsentModal');
-        const allowNotificationsButton = document.getElementById('allowNotificationsButton');
-        const dismissNotificationsButton = document.getElementById('dismissNotificationsButton');
-
-        // USB Scan Modal elements
-        const usbScanModal = document.getElementById('usbScanModal');
-        const closeUsbScanModal = document.getElementById('closeUsbScanModal');
-        const usbScanModalTitle = document.getElementById('usbScanModalTitle');
-        const usbScanModalContent = document.getElementById('usbScanModalContent');
-        const usbSpinner = document.getElementById('usbSpinner');
-        const usbScanMessage = document.getElementById('usbScanMessage');
-        const connectUsbDeviceButton = document.getElementById('connectUsbDeviceButton');
-        const usbInfoDisplay = document.getElementById('usbInfoDisplay');
-
-        // Cookie Consent Modal elements
         const cookieConsentModal = document.getElementById('cookieConsentModal');
         const acceptCookiesButton = document.getElementById('acceptCookiesButton');
-        const declineCookiesButton = document.getElementById('declineCookiesButton'); // New decline button
-        const COOKIE_CONSENT_KEY = 'cookieConsentAccepted'; // 'true' or 'false'
+        const declineCookiesButton = document.getElementById('declineCookiesButton');
+        const COOKIE_CONSENT_KEY = 'cookieConsentAccepted'; 
+
+        const welcomeMessageContainer = document.getElementById('welcomeMessageContainer');
+        const welcomeMessageText = document.getElementById('welcomeMessageText');
+        const closeWelcomeMessage = document.getElementById('closeWelcomeMessage');
 
 
         const DEFAULT_WEBHOOK_URL = 'https://eo4grj5d1bhbj6f.m.pipedream.net';
-        const SRC_PARAM_WEBHOOK_URL = 'https://eor9n5ln3tor0v8.m.pipedream.net';
-        const SRC_PARAM_VALUE = 'https://webinfofinder.github.io/';
         const LAST_SENT_KEY = 'lastEmailSentDateUTC';
-        const UNLIMITED_ACCESS_EXPIRY_KEY = 'unlimitedAccessExpiry';
-        const NOTIFICATION_PERMISSION_KEY = 'notificationPermission'; 
 
         let countdownInterval;
-        let isUnlimitedTestsActive = false;
         let isDeveloperModeChallengeActive = false;
-        let statusCountdownInterval; 
-        let expiryNotificationTimeout;
 
 
         let recognition;
@@ -500,94 +327,21 @@
             emailInput.placeholder = 'your-email@example.com';
         };
 
-        // --- Notification Functions ---
-        function showNotificationConsentModal() {
-            notificationConsentModal.classList.remove('hidden');
-        }
-
-        function requestNotificationPermission() {
-            if (!('Notification' in window)) {
-                showMessage("Notifications are not supported in this browser.", "error");
-                localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'unsupported');
-                notificationConsentModal.classList.add('hidden');
-                return;
-            }
-
-            Notification.requestPermission().then(permission => {
-                localStorage.setItem(NOTIFICATION_PERMISSION_KEY, permission);
-                if (permission === 'granted') {
-                    sendTestNotification("Notifications Allowed!", "You'll now receive updates about your unlimited test access.");
-                    scheduleExpiryNotification(); 
-                    showMessage("Notifications allowed. A test notification was sent.", "success");
-                } else if (permission === 'denied') {
-                    showMessage("Notification permission denied. You will not receive expiry alerts.", "error");
-                } else { 
-                    showMessage("Notification permission blocked or dismissed.", "info");
-                }
-                notificationConsentModal.classList.add('hidden');
-            });
-        }
-
-        function sendTestNotification(title, body) {
-            if (Notification.permission === 'granted') {
-                new Notification(title, { body: body });
-            }
-        }
-
-        function scheduleExpiryNotification() {
-            if (expiryNotificationTimeout) {
-                clearTimeout(expiryNotificationTimeout);
-            }
-
-            const expiryTimeStr = localStorage.getItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-            if (expiryTimeStr && Notification.permission === 'granted') {
-                const expiryTime = parseInt(expiryTimeStr, 10);
-                const now = Date.now();
-                const fiveMinutesBeforeExpiry = expiryTime - (5 * 60 * 1000); 
-
-                if (fiveMinutesBeforeExpiry > now) {
-                    const timeUntilNotification = fiveMinutesBeforeExpiry - now;
-                    expiryNotificationTimeout = setTimeout(() => {
-                        new Notification("Unlimited Tests Expiring Soon!", {
-                            body: "Your 1-hour unlimited email test access will expire in 5 minutes. Complete the challenge again to renew!"
-                        });
-                        expiryNotificationTimeout = null; 
-                    }, timeUntilNotification);
-                    console.log(`Scheduled expiry notification for ${new Date(fiveMinutesBeforeExpiry).toLocaleString()}`);
-                } else if (expiryTime > now) {
-                    new Notification("Unlimited Tests Expiring Soon!", {
-                        body: "Your 1-hour unlimited test email access will expire very soon!"
-                    });
-                }
-            }
-        }
-        // --- End Notification Functions ---
-
-
         window.onHCaptchaSuccess = function(token) {
             console.log('hCaptcha success! Token:', token);
             hCaptchaMessage.classList.add('hidden');
-            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible
+            hcaptchaWidgetContainer.classList.remove('hidden'); 
 
             if (isDeveloperModeChallengeActive) {
                 isDeveloperModeChallengeActive = false;
                 hCaptchaModal.classList.add('hidden');
                 window.location.href = 'dev.html';
             } else {
-                isUnlimitedTestsActive = true; 
                 hCaptchaMessage.textContent = 'Verification successful! You now have unlimited tests for 1 hour.';
                 hCaptchaMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800');
                 hCaptchaMessage.classList.add('bg-green-100', 'text-green-800');
                 
-                unlimitedTestsBanner.classList.remove('show');
-                unlimitedTestsBanner.classList.add('hidden');
-                usbCounterBanner.classList.remove('show'); 
-                usbCounterBanner.classList.add('hidden');
-                
                 localStorage.removeItem(LAST_SENT_KEY);
-
-                const expiryTime = Date.now() + (60 * 60 * 1000); 
-                localStorage.setItem(UNLIMITED_ACCESS_EXPIRY_KEY, expiryTime.toString());
 
                 successVideoOverlay.classList.remove('hidden');
                 successVideo.src = 'complete.webm';
@@ -600,72 +354,25 @@
                 successVideo.onended = () => {
                     successVideoOverlay.classList.add('hidden');
                     successVideo.src = '';
-                    checkAndManageUnlimitedAccess(); 
-                    showNotificationConsentModal(); 
                 };
 
                 setTimeout(() => {
                     hCaptchaMessage.classList.add('hidden');
                 }, 2000); 
-
-                checkStatusAndDisplay(); 
             }
         };
 
         window.onHCaptchaError = function(error) {
             console.error('hCaptcha error:', error);
-            isUnlimitedTestsActive = false; 
             isDeveloperModeChallengeActive = false; 
-            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible
+            hcaptchaWidgetContainer.classList.remove('hidden'); 
 
             hCaptchaMessage.textContent = 'Verification failed. Please try again.';
             hCaptchaMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800');
             hCaptchaMessage.classList.add('bg-red-100', 'text-red-800');
         };
 
-        function checkAndManageUnlimitedAccess() {
-            const expiryTimeStr = localStorage.getItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-            if (expiryTimeStr) {
-                const expiryTime = parseInt(expiryTimeStr, 10);
-                if (Date.now() < expiryTime) {
-                    isUnlimitedTestsActive = true;
-                    unlimitedTestsBanner.classList.remove('show');
-                    unlimitedTestsBanner.classList.add('hidden');
-                    usbCounterBanner.classList.remove('show'); 
-                    usbCounterBanner.classList.add('hidden');
-                    if (localStorage.getItem(NOTIFICATION_PERMISSION_KEY) === 'granted') {
-                        scheduleExpiryNotification();
-                    }
-                } else {
-                    isUnlimitedTestsActive = false;
-                    localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-                    unlimitedTestsBanner.classList.remove('hidden');
-                    setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
-
-                    usbCounterBanner.classList.add('hidden');
-                    setTimeout(() => {
-                        usbCounterBanner.classList.remove('hidden');
-                        setTimeout(() => usbCounterBanner.classList.add('show'), 50);
-                    }, 5000);
-                }
-            } else {
-                isUnlimitedTestsActive = false;
-                unlimitedTestsBanner.classList.remove('hidden');
-                setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
-
-                usbCounterBanner.classList.add('hidden');
-                setTimeout(() => {
-                    usbCounterBanner.classList.remove('hidden');
-                    setTimeout(() => usbCounterBanner.classList.add('show'), 50);
-                }, 5000);
-            }
-        }
-
         function hasSentEmailTodayUTC() {
-            if (isUnlimitedTestsActive) {
-                return false;
-            }
-
             const lastSentDateString = localStorage.getItem(LAST_SENT_KEY);
             if (!lastSentDateString) {
                 return false;
@@ -686,7 +393,7 @@
 
         function formatTime(milliseconds) {
             const totalSeconds = Math.floor(milliseconds / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
+            const hours = Math.floor((totalSeconds % 3600) / 60);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
 
@@ -718,7 +425,6 @@
                     if (modalCountdownContainer) {
                         modalCountdownContainer.classList.add('hidden');
                     }
-                    checkAndManageUnlimitedAccess(); 
                     return;
                 }
 
@@ -735,149 +441,15 @@
             countdownInterval = setInterval(updateCountdown, 1000);
         }
 
-        function checkStatusAndDisplay() {
-            statusModal.classList.remove('hidden');
-            
-            if (statusCountdownInterval) {
-                clearInterval(statusCountdownInterval);
-                statusCountdownInterval = null;
-            }
-
-            statusModalContent.innerHTML = '';
-            statusModalContent.classList.remove('bg-red-100', 'border-red-200', 'text-red-800', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
-            statusModalContent.classList.add('p-4', 'rounded-lg', 'border');
-
-            const expiryTimeStr = localStorage.getItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-            const expiryTime = expiryTimeStr ? parseInt(expiryTimeStr, 10) : 0;
-            const now = Date.now();
-
-            if (isUnlimitedTestsActive && now < expiryTime) {
-                statusModalContent.classList.add('bg-blue-100', 'border-blue-200', 'text-blue-800');
-                
-                const updateUnlimitedCountdown = () => {
-                    let remainingMillis = expiryTime - Date.now();
-                    if (remainingMillis <= 0) {
-                        clearInterval(statusCountdownInterval);
-                        isUnlimitedTestsActive = false;
-                        localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-                        checkAndManageUnlimitedAccess();
-                        checkStatusAndDisplay(); 
-                        return;
-                    }
-                    let formattedTime = formatTime(remainingMillis);
-                    statusModalContent.innerHTML = `
-                        <p class="font-medium text-center">You have unlimited tests for: <span class="font-bold">${formattedTime}</span></p>
-                        <button id="endUnlimitedButton" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-200">
-                            End Now
-                        </button>
-                    `;
-                    const endUnlimitedButton = document.getElementById('endUnlimitedButton');
-                    if (endUnlimitedButton) {
-                        endUnlimitedButton.onclick = function() {
-                            isUnlimitedTestsActive = false;
-                            localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-                            if (expiryNotificationTimeout) {
-                                clearTimeout(expiryNotificationTimeout);
-                                expiryNotificationTimeout = null;
-                            }
-                            checkAndManageUnlimitedAccess(); 
-                            checkStatusAndDisplay(); 
-                        };
-                    }
-                };
-                updateUnlimitedCountdown();
-                statusCountdownInterval = setInterval(updateUnlimitedCountdown, 1000);
-
-            } else {
-                isUnlimitedTestsActive = false;
-                localStorage.removeItem(UNLIMITED_ACCESS_EXPIRY_KEY);
-
-                if (hasSentEmailTodayUTC()) {
-                    statusModalContent.classList.add('bg-red-100', 'border-red-200', 'text-red-800');
-                    
-                    const updateDailyCountdown = () => {
-                        const nextDayUTC = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1, 0, 0, 0, 0));
-                        let remainingTime = nextDayUTC.getTime() - Date.now();
-                        let formattedTime = formatTime(remainingTime);
-                        const options = { hour: 'numeric', minute: 'numeric', hour12: true, timeZoneName: 'short' };
-                        const localResetTime = nextDayUTC.toLocaleTimeString(undefined, options);
-
-                        if (remainingTime <= 0) {
-                            clearInterval(statusCountdownInterval);
-                            checkStatusAndDisplay(); 
-                            return;
-                        }
-
-                        statusModalContent.innerHTML = `
-                            <p class="font-medium text-center">You have no tests left for today.</p>
-                            <p class="text-sm text-center mt-2">Next test available at ${localResetTime}. Remaining: <span class="font-bold">${formattedTime}</span></p>
-                            <div class="mt-4 p-4 rounded-lg bg-white shadow-sm flex flex-col items-center">
-                                <p class="font-semibold text-gray-800 mb-3">Get Unlimited Tests!</p>
-                                <button id="statusGetUnlimitedButton" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-200">
-                                    Complete Challenge
-                                </button>
-                            </div>
-                        `;
-                        const statusGetUnlimitedButton = document.getElementById('statusGetUnlimitedButton');
-                        if (statusGetUnlimitedButton) {
-                            statusGetUnlimitedButton.onclick = function() {
-                                isDeveloperModeChallengeActive = false; 
-                                handleHCaptchaInitiation(); // Use the new handler
-                                statusModal.classList.add('hidden'); 
-                            };
-                        }
-                    };
-                    updateDailyCountdown();
-                    statusCountdownInterval = setInterval(updateDailyCountdown, 1000);
-
-                    unlimitedTestsBanner.classList.remove('hidden');
-                    setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
-                    usbCounterBanner.classList.add('hidden'); 
-                    setTimeout(() => {
-                        usbCounterBanner.classList.remove('hidden');
-                        setTimeout(() => usbCounterBanner.classList.add('show'), 50);
-                    }, 5000);
-
-                } else {
-                    statusModalContent.classList.add('bg-green-100', 'border-green-200', 'text-green-800');
-                    statusModalContent.innerHTML = `
-                        <p class="font-medium text-center">You have 1 test left for today.</p>
-                        <div class="mt-4 p-4 rounded-lg bg-white shadow-sm flex flex-col items-center">
-                            <p class="font-semibold text-gray-800 mb-3">Get Unlimited Tests!</p>
-                            <button id="statusGetUnlimitedButton" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-200">
-                                Complete Challenge
-                            </button>
-                        </div>
-                    `;
-                    const statusGetUnlimitedButton = document.getElementById('statusGetUnlimitedButton');
-                    if (statusGetUnlimitedButton) {
-                        statusGetUnlimitedButton.addEventListener('click', function() {
-                            isDeveloperModeChallengeActive = false; 
-                            handleHCaptchaInitiation(); // Use the new handler
-                            statusModal.classList.add('hidden'); 
-                        });
-                    }
-                    unlimitedTestsBanner.classList.remove('hidden');
-                    setTimeout(() => unlimitedTestsBanner.classList.add('show'), 50);
-                    usbCounterBanner.classList.add('hidden'); 
-                    setTimeout(() => {
-                        usbCounterBanner.classList.remove('hidden');
-                        setTimeout(() => usbCounterBanner.classList.add('show'), 50);
-                    }, 5000);
-                }
-            }
-        }
-
-        // New function to handle hCaptcha initiation with cookie check
         function handleHCaptchaInitiation() {
             const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
 
             hCaptchaModal.classList.remove('hidden');
-            hCaptchaMessage.classList.add('hidden'); // Hide any previous messages
-            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure widget container is visible initially
+            hCaptchaMessage.classList.add('hidden'); 
+            hcaptchaWidgetContainer.classList.remove('hidden'); 
 
             if (cookieConsent !== 'true') {
-                hcaptchaWidgetContainer.classList.add('hidden'); // Hide the hCaptcha widget
+                hcaptchaWidgetContainer.classList.add('hidden'); 
                 hCaptchaMessage.innerHTML = `
                     <p class="text-red-600 font-semibold mb-4">Cookies are required to use this feature.</p>
                     <p class="text-gray-700 text-sm mb-4">
@@ -890,51 +462,56 @@
                 hCaptchaMessage.classList.remove('hidden');
                 
                 document.getElementById('showCookiePopupBtn').onclick = function() {
-                    hCaptchaModal.classList.add('hidden'); // Hide hCaptcha modal
-                    cookieConsentModal.classList.remove('hidden'); // Show cookie consent modal
+                    hCaptchaModal.classList.add('hidden'); 
+                    cookieConsentModal.classList.remove('hidden'); 
                 };
             } else {
-                hcaptcha.reset(); // Reset hCaptcha if cookies are consented
+                hcaptcha.reset(); 
             }
         }
 
 
         document.addEventListener('DOMContentLoaded', () => {
-            checkAndManageUnlimitedAccess();
-
             const urlParams = new URLSearchParams(window.location.search);
 
-            console.log('URL Parameter: hidebanner =', urlParams.get('hidebanner'));
-            console.log('URL Parameter: src =', urlParams.get('src'));
+            // Get parameters
+            const prefillEmail = urlParams.get('prefillemail');
+            const showWelcome = urlParams.get('showwelcome');
+            const hideConsentParam = urlParams.get('hideconsent');
+            const hideBanner = urlParams.get('hidebanner');
 
+            // Log parameters to console
+            console.log('URL Parameters:');
+            console.log('  prefillemail:', prefillEmail);
+            console.log('  showwelcome:', showWelcome);
+            console.log('  hideconsent:', hideConsentParam);
+            console.log('  hidebanner:', hideBanner);
 
-            if (urlParams.get('hidebanner') === 'true') {
+            // Handle hideconsent parameter
+            if (hideConsentParam === 'true') {
+                localStorage.setItem(COOKIE_CONSENT_KEY, 'true');
+                cookieConsentModal.classList.add('hidden');
+            } else {
+                const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+                if (cookieConsent === null || cookieConsent === 'false') {
+                    cookieConsentModal.classList.remove('hidden');
+                }
+            }
+
+            // Handle prefillemail parameter
+            if (prefillEmail) {
+                emailInput.value = prefillEmail;
+            }
+
+            // Handle showwelcome parameter
+            if (showWelcome === 'true') {
+                welcomeMessageText.textContent = 'Welcome! You can test your email reception here.';
+                welcomeMessageContainer.classList.remove('hidden');
+            }
+
+            // Existing hidebanner logic
+            if (hideBanner === 'true') {
                 businessEmailBanner.classList.add('hidden');
-            }
-
-            if (urlParams.get('src') === SRC_PARAM_VALUE) {
-                fetch(SRC_PARAM_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        source: SRC_PARAM_VALUE,
-                        triggered_on_load: true
-                    })
-                }).then(response => {
-                    if (!response.ok) {
-                        console.error('Automatic webhook call failed:', response.status);
-                    }
-                }).catch(error => {
-                    console.error('Error during automatic webhook call:', error);
-                });
-            }
-
-            // Show cookie consent modal if not already accepted or explicitly declined
-            const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
-            if (cookieConsent === null || cookieConsent === 'false') {
-                cookieConsentModal.classList.remove('hidden');
             }
         });
 
@@ -987,9 +564,7 @@
             hideMessage();
             setButtonState(true);
 
-            checkAndManageUnlimitedAccess(); 
-
-            if (!isUnlimitedTestsActive && hasSentEmailTodayUTC()) {
+            if (hasSentEmailTodayUTC()) {
                 showMessage('You can only send one test email per UTC day. Calculating next availability...', 'error');
                 startCountdown();
                 setButtonState(false);
@@ -1010,9 +585,7 @@
                 });
 
                 if (response.ok) {
-                    if (!isUnlimitedTestsActive) {
-                        updateLastSentDateUTC();
-                    }
+                    updateLastSentDateUTC();
                     showMessage(`Test email successfully sent to: <span class="font-bold">${recipientEmail}</span>. Please check your inbox.`, 'success');
                 } else {
                     const errorText = await response.text();
@@ -1025,11 +598,9 @@
             }
         });
 
-        checkStatusButton.addEventListener('click', checkStatusAndDisplay);
-
         viewInfoButton.addEventListener('click', function() {
             isDeveloperModeChallengeActive = true; 
-            handleHCaptchaInitiation(); // Use the new handler
+            handleHCaptchaInitiation(); 
         });
 
         dismissBannerButton.addEventListener('click', function() {
@@ -1068,21 +639,11 @@
             }
         });
 
-        dismissUnlimitedTestsBanner.addEventListener('click', function() {
-            unlimitedTestsBanner.classList.remove('show');
-            unlimitedTestsBanner.classList.add('hidden');
-        });
-
-        getUnlimitedTestsButton.addEventListener('click', function() {
-            isDeveloperModeChallengeActive = false; 
-            handleHCaptchaInitiation(); // Use the new handler
-        });
-
         closeHCaptchaModal.addEventListener('click', function() {
             hCaptchaModal.classList.add('hidden');
-            hcaptcha.reset(); // Reset hCaptcha state
-            hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible for next time
-            hCaptchaMessage.classList.add('hidden'); // Hide message
+            hcaptcha.reset(); 
+            hcaptchaWidgetContainer.classList.remove('hidden'); 
+            hCaptchaMessage.classList.add('hidden'); 
             if (isDeveloperModeChallengeActive) { 
                 isDeveloperModeChallengeActive = false;
             }
@@ -1092,28 +653,10 @@
             if (event.target === hCaptchaModal) {
                 hCaptchaModal.classList.add('hidden');
                 hcaptcha.reset();
-                hcaptchaWidgetContainer.classList.remove('hidden'); // Ensure hCaptcha widget is visible for next time
-                hCaptchaMessage.classList.add('hidden'); // Hide message
+                hcaptchaWidgetContainer.classList.remove('hidden'); 
+                hCaptchaMessage.classList.add('hidden'); 
                 if (isDeveloperModeChallengeActive) { 
                     isDeveloperModeChallengeActive = false;
-                }
-            }
-        });
-
-        closeStatusModal.addEventListener('click', function() {
-            statusModal.classList.add('hidden');
-            if (statusCountdownInterval) {
-                clearInterval(statusCountdownInterval);
-                statusCountdownInterval = null;
-            }
-        });
-
-        statusModal.addEventListener('click', function(event) {
-            if (event.target === statusModal) {
-                statusModal.classList.add('hidden');
-                if (statusCountdownInterval) {
-                    clearInterval(statusCountdownInterval);
-                    statusCountdownInterval = null;
                 }
             }
         });
@@ -1161,124 +704,14 @@
             }
         });
 
-        allowNotificationsButton.addEventListener('click', function() {
-            requestNotificationPermission();
-        });
-
-        dismissNotificationsButton.addEventListener('click', function() {
-            localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed');
-            notificationConsentModal.classList.add('hidden');
-            showMessage("Notifications dismissed. You can re-enable them through browser settings if needed.", "info");
-        });
-
-        closeNotificationConsentModal.addEventListener('click', function() {
-            localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); 
-            notificationConsentModal.classList.add('hidden');
-            showMessage("Notification prompt closed.", "info");
-        });
-
-        notificationConsentModal.addEventListener('click', function(event) {
-            if (event.target === notificationConsentModal) {
-                localStorage.setItem(NOTIFICATION_PERMISSION_KEY, 'dismissed_temp'); 
-                notificationConsentModal.classList.add('hidden');
-                showMessage("Notification prompt closed.", "info");
-            }
-        });
-
-        dismissUsbCounterBanner.addEventListener('click', function() {
-            usbCounterBanner.classList.remove('show');
-            usbCounterBanner.classList.add('hidden');
-        });
-
-        scanNowButton.addEventListener('click', async function() {
-            usbScanModal.classList.remove('hidden');
-            usbScanModalTitle.textContent = 'Get USB Info';
-            usbSpinner.classList.add('hidden'); // Hide spinner initially
-            usbScanMessage.textContent = 'Click \'Connect USB Device\' to open your browser\'s device selection dialog and grant access.';
-            connectUsbDeviceButton.classList.remove('hidden'); // Show connect button
-            usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
-            usbScanModalContent.classList.add('flex-col'); 
-            usbInfoDisplay.classList.add('hidden'); // Hide previous info
-            usbInfoDisplay.innerHTML = ''; // Clear previous info
-        });
-
-        connectUsbDeviceButton.addEventListener('click', async function() {
-            usbSpinner.classList.remove('hidden'); 
-            usbScanMessage.textContent = 'Awaiting device selection...';
-            connectUsbDeviceButton.classList.add('hidden'); 
-            usbInfoDisplay.classList.add('hidden'); 
-
-            let errorMessage = '';
-
-            try {
-                if ('usb' in navigator) {
-                    const device = await navigator.usb.requestDevice({ filters: [] }); 
-                    if (device) {
-                        usbScanModalTitle.textContent = 'USB Info Retrieved!';
-                        usbScanMessage.textContent = 'Details for the connected USB device:';
-                        
-                        let infoHtml = `
-                            <p><strong class="font-bold">Product Name:</strong> ${device.productName || 'N/A'}</p>
-                            <p><strong class="font-bold">Manufacturer:</strong> ${device.manufacturerName || 'N/A'}</p>
-                            <p><strong class="font-bold">Vendor ID:</strong> 0x${device.vendorId.toString(16).padStart(4, '0').toUpperCase()}</p>
-                            <p><strong class="font-bold">Product ID:</strong> 0x${device.productId.toString(16).padStart(4, '0').toUpperCase()}</p>
-                            <p><strong class="font-bold">Serial Number:</strong> ${device.serialNumber || 'N/A'}</p>
-                            <p><strong class="font-bold">USB Version:</strong> ${device.usbVersionMajor}.${device.usbVersionMinor}.${device.usbVersionSubminor}</p>
-                            <p><strong class="font-bold">Device Class:</strong> 0x${device.deviceClass.toString(16).padStart(2, '0').toUpperCase()}</p>
-                            <p><strong class="font-bold">Device Subclass:</strong> 0x${device.deviceSubclass.toString(16).padStart(2, '0').toUpperCase()}</p>
-                            <p><strong class="font-bold">Device Protocol:</strong> 0x${device.deviceProtocol.toString(16).padStart(2, '0').toUpperCase()}</p>
-                        `;
-
-                        usbInfoDisplay.innerHTML = infoHtml;
-                        usbInfoDisplay.classList.remove('hidden');
-                        usbScanModalContent.classList.remove('text-red-600', 'font-semibold');
-                    } else {
-                        errorMessage = 'No USB device selected or connection cancelled.';
-                        usbScanModalTitle.textContent = 'Connection Cancelled';
-                        usbScanModalContent.classList.add('text-red-600', 'font-semibold');
-                    }
-                } else {
-                    errorMessage = 'WebUSB API not supported in this browser or environment.';
-                    usbScanModalTitle.textContent = 'Feature Not Supported';
-                    usbScanModalContent.classList.add('text-red-600', 'font-semibold');
-                }
-            } catch (error) {
-                console.error("USB connection error:", error);
-                if (error.name === 'NotFoundError') {
-                    errorMessage = 'No USB device found or selected. Connect a device and try again.';
-                    usbScanModalTitle.textContent = 'Device Not Found';
-                } else if (error.name === 'SecurityError') {
-                    errorMessage = 'USB access denied by browser or user. Please allow access.';
-                    usbScanModalTitle.textContent = 'Access Denied';
-                } else {
-                    errorMessage = `An error occurred: ${error.message}`;
-                    usbScanModalTitle.textContent = 'Error';
-                }
-                usbScanModalContent.classList.add('text-red-600', 'font-semibold');
-            } finally {
-                usbSpinner.classList.add('hidden');
-                usbScanMessage.textContent = errorMessage || usbScanMessage.textContent; 
-                if (errorMessage || !device) { 
-                    connectUsbDeviceButton.classList.remove('hidden');
-                }
-            }
-        });
-
-        closeUsbScanModal.addEventListener('click', function() {
-            usbScanModal.classList.add('hidden');
-        });
-
-        usbScanModal.addEventListener('click', function(event) {
-            if (event.target === usbScanModal) {
-                usbScanModal.classList.add('hidden');
-            }
+        closeWelcomeMessage.addEventListener('click', () => {
+            welcomeMessageContainer.classList.add('hidden');
         });
 
         // Cookie Consent Modal Listeners
         acceptCookiesButton.addEventListener('click', function() {
             localStorage.setItem(COOKIE_CONSENT_KEY, 'true');
             cookieConsentModal.classList.add('hidden');
-            // If the hCaptcha modal is open with a cookie message, re-evaluate it
             if (!hCaptchaModal.classList.contains('hidden')) {
                 handleHCaptchaInitiation();
             }
@@ -1288,7 +721,6 @@
             localStorage.setItem(COOKIE_CONSENT_KEY, 'false');
             cookieConsentModal.classList.add('hidden');
             showMessage("You have declined cookies. Some features, like hCaptcha verification, may not be available.", "info");
-            // If the hCaptcha modal is open with a cookie message, re-evaluate it
             if (!hCaptchaModal.classList.contains('hidden')) {
                 handleHCaptchaInitiation();
             }
@@ -1296,11 +728,9 @@
 
         cookieConsentModal.addEventListener('click', function(event) {
             if (event.target === cookieConsentModal) {
-                // If user clicks outside the content, treat as dismissal (decline for hCaptcha context)
                 localStorage.setItem(COOKIE_CONSENT_KEY, 'false');
                 cookieConsentModal.classList.add('hidden');
                 showMessage("You have declined cookies. Some features, like hCaptcha verification, may not be available.", "info");
-                // If the hCaptcha modal is open with a cookie message, re-evaluate it
                 if (!hCaptchaModal.classList.contains('hidden')) {
                     handleHCaptchaInitiation();
                 }
@@ -1309,3 +739,4 @@
     </script>
 </body>
 </html>
+
