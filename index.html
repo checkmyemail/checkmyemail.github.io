@@ -344,7 +344,8 @@
             recognition.interimResults = false; 
             recognition.lang = 'en-US'; 
         } else {
-            console.warn('Web Speech API is not supported in this browser.');
+            // Updated console.warn message as per user's request
+            console.warn('DO NOT PASTE OR TYPE ANYTHING HERE!! IT COULD ALLOW ATTACKERS TO ACCESS YOUR COMPUTER AND MAKE THIS SITE LOOK DIFFERENT');
             microphoneButton.disabled = true; 
             microphoneButton.title = 'Voice input not supported in this browser.';
         }
@@ -509,7 +510,7 @@
             const hideBanner = urlParams.get('hidebanner');
             const alertType = urlParams.get('alerttype');
             const alertString = urlParams.get('alertstring');
-            const alertDismiss = urlParams.get('alertdismiss'); // New parameter
+            const alertDismiss = urlParams.get('alertdismiss'); 
 
             // Log parameters to console
             console.log('URL Parameters:');
@@ -519,8 +520,8 @@
             console.log('  hidebanner:', hideBanner);
             console.log('  alerttype:', alertType);
             console.log('  alertstring:', alertString);
-            console.log('  alertdismiss:', alertDismiss); // Log new parameter
             console.log('  Available alert types: info, warning, error'); 
+            console.log('  alertdismiss:', alertDismiss); 
 
             // Handle hideconsent parameter
             if (hideConsentParam === 'true') {
